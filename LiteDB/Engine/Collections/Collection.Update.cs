@@ -6,13 +6,16 @@ using System.Text;
 
 namespace LiteDB
 {
-    public partial class Collection<T>
+    public partial class Collection
     {
         /// <summary>
         /// Update object in collection
         /// </summary>
-        public virtual bool Update(object id, T value)
+        public virtual bool Update(object id, BsonDocument doc)
         {
+            if (id == null) throw new ArgumentNullException("id");
+            if (doc == null) throw new ArgumentNullException("doc");
+
             var col = this.GetCollectionPage();
 
             // find indexNode from pk index
@@ -21,7 +24,7 @@ namespace LiteDB
             if (indexNode == null) return false;
 
             // serialize object
-            var bytes = BsonSerializer.Serialize(value);
+            var bytes = doc.ToBson();
 
             if (bytes.Length > BsonDocument.MAX_DOCUMENT_SIZE)
                 throw new LiteDBException("Object exceed limit of " + Math.Truncate(BsonDocument.MAX_DOCUMENT_SIZE / 1024m) + " Kb");
@@ -44,7 +47,7 @@ namespace LiteDB
 
                     if (!index.IsEmpty)
                     {
-                        var key = BsonSerializer.GetValueField(value, index.Field);
+                        var key = doc.GetFieldValue(index.Field);
 
                         var node = _engine.Indexer.GetNode(dataBlock.IndexRef[i]);
 

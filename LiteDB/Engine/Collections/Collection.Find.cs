@@ -6,22 +6,22 @@ using System.Text;
 
 namespace LiteDB
 {
-    public partial class Collection<T>
+    public partial class Collection
     {
-        public T FindById(object id)
+        public BsonDocument FindById(object id)
         {
             var col = this.GetCollectionPage();
 
             var node = _engine.Indexer.FindOne(col.PK, id);
 
-            if (node == null) return default(T);
+            if (node == null) return null;
 
             var dataBlock = _engine.Data.Read(node.DataBlock, true);
 
-            return BsonSerializer.Deserialize<T>(dataBlock.Data);
+            return new BsonDocument(dataBlock.Data);
         }
 
-        public T FindOne(Query query)
+        public BsonDocument FindOne(Query query)
         {
             return this.Find(query).FirstOrDefault();
         }
@@ -29,7 +29,7 @@ namespace LiteDB
         /// <summary>
         /// Find objects inside a collection using a index. Index must exists
         /// </summary>
-        public IEnumerable<T> Find(Query query)
+        public IEnumerable<BsonDocument> Find(Query query)
         {
             var col = this.GetCollectionPage();
 
@@ -39,17 +39,17 @@ namespace LiteDB
             {
                 var dataBlock = _engine.Data.Read(node.DataBlock, true);
 
-                var obj = BsonSerializer.Deserialize<T>(dataBlock.Data);
+                var doc = new BsonDocument(dataBlock.Data);
 
-                yield return obj;
+                yield return doc;
             }
         }
 
         /// <summary>
         /// Find all object ids in a collection using a index. Index must exists
         /// </summary>
-        /// <typeparam name="K">Type of Id value</typeparam>
-        public IEnumerable<K> FindIds<K>(Query query)
+        /// <typeparam name="TKey">Type of Id value</typeparam>
+        public IEnumerable<TKey> FindIds<TKey>(Query query)
         {
             var col = this.GetCollectionPage();
 
@@ -57,7 +57,7 @@ namespace LiteDB
 
             foreach (var node in nodes)
             {
-                yield return (K)node.Key.Value;
+                yield return (TKey)node.Key.Value;
             }
         }
 

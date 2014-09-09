@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,7 +14,7 @@ namespace LiteDB
     /// </summary>
     public class BsonValue
     {
-        private object _value = null;
+        private JValue _value = null;
 
         public BsonValue()
         {

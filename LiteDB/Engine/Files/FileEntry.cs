@@ -15,15 +15,15 @@ namespace LiteDB
         public string Id { get; set; }
         public int Length { get; set; }
         public DateTime UploadDate { get; set; }
-        public Dictionary<string, object> Metadata { get; set; }
+        public NameValueCollection Metadata { get; set; }
 
         internal uint PageID { get; set; }
 
-        internal FileEntry(string id, Dictionary<string, object> metadata)
+        internal FileEntry(string id, NameValueCollection metadata)
         {
             this.PageID = uint.MaxValue;
             this.Id = id;
-            this.Metadata = metadata == null ? new Dictionary<string, object>() : metadata;
+            this.Metadata = metadata == null ? new NameValueCollection() : metadata;
             this.UploadDate = DateTime.Now;
         }
 
@@ -32,7 +32,7 @@ namespace LiteDB
             this.Id = doc["Id"].AsString;
             this.Length = doc["Length"].AsInt;
             this.UploadDate = doc["UploadDate"].AsDateTime;
-            this.Metadata = (Dictionary<string, object>)doc["Metadata"].RawValue;
+            this.Metadata = (NameValueCollection)doc["Metadata"].RawValue;
             this.PageID = (uint)doc["PageID"].RawValue;
         }
 

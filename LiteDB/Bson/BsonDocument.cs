@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,26 +21,28 @@ namespace LiteDB
         {
         }
 
-        public BsonDocument(Dictionary<string, object> value)
-            : base(value)
-        {
-        }
-
-        public BsonDocument(object anonymousObject)
+        public BsonDocument(object obj)
             : this()
         {
-            this.Append(anonymousObject);
+            //this.Append(anonymousObject);
         }
 
-        public T ConvertTo<T>()
-            where T : new()
+        public BsonDocument(string json)
         {
-            return BsonSerializer.Deserialize<T>(BsonSerializer.Serialize(this));
         }
 
-        public static BsonDocument ConvertFrom(object value)
+        public BsonDocument(byte[] data)
         {
-            return BsonSerializer.Deserialize<BsonDocument>(BsonSerializer.Serialize(value));
+        }
+
+        public byte[] ToBson()
+        {
+            return null;
+        }
+
+        public object GetFieldValue(string key)
+        {
+            return null;
         }
     }
 }

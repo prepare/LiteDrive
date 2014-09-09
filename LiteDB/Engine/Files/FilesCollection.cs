@@ -8,7 +8,7 @@ namespace LiteDB
 {
     public partial class FilesCollection
     {
-        private Collection<BsonDocument> _col;
+        private Collection _col;
         private LiteEngine _engine;
 
         internal FilesCollection(LiteEngine engine)

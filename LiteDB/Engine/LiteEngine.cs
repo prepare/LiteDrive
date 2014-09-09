@@ -70,9 +70,9 @@ namespace LiteDB
             return new Collection<T>(this, name);
         }
 
-        public Collection<BsonDocument> GetCollection(string name)
+        public Collection GetCollection(string name)
         {
-            return new Collection<BsonDocument>(this, name);
+            return new Collection(this, name);
         }
 
         public bool DropCollection(string name)

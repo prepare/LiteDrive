@@ -33,6 +33,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.6.0.5\lib\net35\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -47,6 +50,7 @@
     <Compile Include="Engine\Collections\Collection.Find.cs" />
     <Compile Include="Engine\Collections\Collection.Insert.cs" />
     <Compile Include="Engine\Collections\Collection.Update.cs" />
+    <Compile Include="Engine\Collections\CollectionT.cs" />
     <Compile Include="Engine\Files\LiteFileStream.cs" />
     <Compile Include="Engine\Files\FilesCollection.Find.cs" />
     <Compile Include="Engine\Files\FilesCollection.Delete.cs" />
@@ -55,19 +59,12 @@
     <Compile Include="Engine\Files\FileEntry.cs" />
     <Compile Include="Engine\Files\FilesCollection.cs" />
     <Compile Include="Query\Query.cs" />
-    <Compile Include="Bson\BsonSerializer.cs" />
     <Compile Include="Bson\BsonValue.cs" />
     <Compile Include="Bson\BsonType.cs" />
     <Compile Include="Bson\BsonArray.cs" />
     <Compile Include="Bson\BsonObject.cs" />
     <Compile Include="Bson\BsonIgnoreAttribute.cs" />
     <Compile Include="Bson\BsonDocument.cs" />
-    <Compile Include="Bson\fastBinaryJson\BJSON.cs" />
-    <Compile Include="Bson\fastBinaryJson\BJsonParser.cs" />
-    <Compile Include="Bson\fastBinaryJson\BJsonSerializer.cs" />
-    <Compile Include="Bson\fastBinaryJson\Getters.cs" />
-    <Compile Include="Bson\fastBinaryJson\Reflection.cs" />
-    <Compile Include="Bson\fastBinaryJson\SafeDictionary.cs" />
     <Compile Include="Storage\Pages\DataPage.cs" />
     <Compile Include="Storage\Pages\IndexPage.cs" />
     <Compile Include="Storage\Services\CollectionService.cs" />
@@ -97,7 +94,9 @@
     <Compile Include="Utils\DictionaryExtensions.cs" />
     <Compile Include="Utils\LiteDBException.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

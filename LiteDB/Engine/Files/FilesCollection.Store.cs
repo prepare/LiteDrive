@@ -13,7 +13,7 @@ namespace LiteDB
         /// <summary>
         /// Insert or update a file content inside datafile
         /// </summary>
-        public FileEntry Store(string id, Stream stream, Dictionary<string, object> metadata = null)
+        public FileEntry Store(string id, Stream stream, NameValueCollection metadata = null)
         {
             if (string.IsNullOrEmpty(id)) throw new ArgumentNullException("key");
             if (stream == null) throw new ArgumentNullException("stream");
@@ -82,7 +82,7 @@ namespace LiteDB
             return entry;
         }
 
-        public FileEntry Store(string id, string filename, Dictionary<string, object> metadata = null)
+        public FileEntry Store(string id, string filename, NameValueCollection metadata = null)
         {
             using (var stream = new FileStream(filename, FileMode.Open, FileAccess.Read))
             {
