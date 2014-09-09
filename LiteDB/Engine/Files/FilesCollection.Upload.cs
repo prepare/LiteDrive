@@ -13,12 +13,12 @@ namespace LiteDB
         /// <summary>
         /// Insert or update a file content inside datafile
         /// </summary>
-        public FileEntry Store(string id, Stream stream, NameValueCollection metadata = null)
+        public FileEntry Upload(string key, Stream stream, NameValueCollection metadata = null)
         {
-            if (string.IsNullOrEmpty(id)) throw new ArgumentNullException("key");
+            if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("key");
             if (stream == null) throw new ArgumentNullException("stream");
 
-            if(!Regex.IsMatch(id, @"^[^\.<>\\/|:""*][^<>\\/|:""*]*(/[^\.<>\\/|:""*][^<>\\/|:""*]*)*$"))
+            if(!Regex.IsMatch(key, @"^[^\.<>\\/|:""*][^<>\\/|:""*]*(/[^\.<>\\/|:""*][^<>\\/|:""*]*)*$"))
                 throw new ArgumentException("Invalid key format. Use key as path/to/file/filename.ext");
 
             // try to find _files collection - if not found, create a new one inside a transaction and commit changes
@@ -30,10 +30,10 @@ namespace LiteDB
             }
 
             // find document and convert to entry (or create a new one)
-            var doc = _col.FindById(id);
+            var doc = _col.FindById(key);
 
 
-            var entry = doc == null ? new FileEntry(id, metadata) : new FileEntry(doc);
+            var entry = doc == null ? new FileEntry(key, metadata) : new FileEntry(doc);
 
             // storage do not use cache - read/write pages directly from disk
             // so, transaction is not allowed. 
@@ -57,7 +57,7 @@ namespace LiteDB
 
                     entry.Length = _engine.Data.StoreStreamData(page, stream);
 
-                    _col.Insert(id, entry.ToBson());
+                    _col.Insert(key, entry.ToBson());
                 }
                 else
                 {
@@ -67,7 +67,7 @@ namespace LiteDB
                     entry.UploadDate = DateTime.Now;
                     entry.Metadata = metadata ?? entry.Metadata;
 
-                    _col.Update(id, entry.ToBson());
+                    _col.Update(key, entry.ToBson());
                 }
 
                 _engine.Transaction.Commit();
@@ -82,11 +82,11 @@ namespace LiteDB
             return entry;
         }
 
-        public FileEntry Store(string id, string filename, NameValueCollection metadata = null)
+        public FileEntry Upload(string key, string filename, NameValueCollection metadata = null)
         {
             using (var stream = new FileStream(filename, FileMode.Open, FileAccess.Read))
             {
-                return this.Store(id, stream, metadata);
+                return this.Upload(key, stream, metadata);
             }
         }
 
@@ -97,7 +97,7 @@ namespace LiteDB
         {
             if (file == null) throw new ArgumentNullException("file");
 
-            return _col.Update(file.Id, file.ToBson());
+            return _col.Update(file.Key, file.ToBson());
         }
     }
 }

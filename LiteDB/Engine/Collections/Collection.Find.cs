@@ -6,7 +6,7 @@ using System.Text;
 
 namespace LiteDB
 {
-    public partial class Collection
+    public partial class Collection<T>
     {
         public BsonDocument FindById(object id)
         {

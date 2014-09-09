@@ -14,7 +14,7 @@ namespace LiteDB
     /// </summary>
     public class BsonDocument : BsonValue
     {
-        public const int MAX_DOCUMENT_SIZE = 256 * 124;
+        public const int MAX_DOCUMENT_SIZE = 256 * 1024; // limits in 256 max document size to avoid large documents, memory usage and slow performance
 
         public BsonDocument()
             : base(new Dictionary<string, object>())
@@ -29,6 +29,10 @@ namespace LiteDB
 
         public BsonDocument(string json)
         {
+            Newtonsoft.Json.Linq.JObject o;
+            Newtonsoft.Json.Linq.JValue o;
+
+
         }
 
         public BsonDocument(byte[] data)
@@ -38,6 +42,17 @@ namespace LiteDB
         public byte[] ToBson()
         {
             return null;
+        }
+
+        public string ToJson()
+        {
+            return "";
+        }
+
+        public T To<T>()
+            where T : new()
+        {
+            return default(T);
         }
 
         public object GetFieldValue(string key)

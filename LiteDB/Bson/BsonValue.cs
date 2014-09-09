@@ -14,7 +14,7 @@ namespace LiteDB
     /// </summary>
     public class BsonValue
     {
-        private JValue _value = null;
+        private object _value = null;
 
         public BsonValue()
         {
@@ -80,61 +80,14 @@ namespace LiteDB
             return this;
         }
 
-        /// <summary>
-        /// Read all first level of properties to get object values. doc.Append(new { Name = "John", Age = 55 });
-        /// </summary>
-        public BsonValue Append(object anonymousObject)
-        {
-            foreach (var prop in anonymousObject.GetType().GetProperties())
-            {
-                this[prop.Name] = new BsonValue(prop.GetValue(anonymousObject, null));
-            }
-            return this;
-        }
-
-        #endregion
-
-        #region Array operations
-
-        public void Add(object value)
-        {
-            if (this.Type != BsonType.Array) throw new LiteDBException("Bson value is not an array");
-
-            var array = (List<object>)_value;
-            array.Add(value);
-        }
-
-        public void Add(BsonValue value)
-        {
-            if (this.Type != BsonType.Array) throw new LiteDBException("Bson value is not an array");
-
-            var array = (List<object>)_value;
-            array.Add(value.RawValue);
-        }
-
-        public void Remove(int index)
-        {
-            if(this.Type != BsonType.Array) throw new LiteDBException("Bson value is not an array");
-
-            var array = (List<object>)_value;
-            array.RemoveAt(index);
-
-        }
-
-        public int Length
-        {
-            get
-            {
-                if (this.Type != BsonType.Array) return this.Keys.Length;
-
-                var array = (List<object>)_value;
-                return array.Count;
-            }
-        }
-
         #endregion
 
         #region Convert types
+
+        public BsonArray AsArray
+        {
+            get { return this.Type == BsonType.Array ? new BsonArray(_value) : null; }
+        }
 
         public string AsString
         {

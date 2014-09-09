@@ -6,7 +6,7 @@ using System.Text;
 
 namespace LiteDB
 {
-    public partial class Collection
+    public partial class Collection<T>
     {
         /// <summary>
         /// Insert a object on collection using a key

@@ -50,12 +50,11 @@
     <Compile Include="Engine\Collections\Collection.Find.cs" />
     <Compile Include="Engine\Collections\Collection.Insert.cs" />
     <Compile Include="Engine\Collections\Collection.Update.cs" />
-    <Compile Include="Engine\Collections\CollectionT.cs" />
     <Compile Include="Engine\Files\LiteFileStream.cs" />
     <Compile Include="Engine\Files\FilesCollection.Find.cs" />
     <Compile Include="Engine\Files\FilesCollection.Delete.cs" />
-    <Compile Include="Engine\Files\FilesCollection.OpenRead.cs" />
-    <Compile Include="Engine\Files\FilesCollection.Store.cs" />
+    <Compile Include="Engine\Files\FilesCollection.Download.cs" />
+    <Compile Include="Engine\Files\FilesCollection.Upload.cs" />
     <Compile Include="Engine\Files\FileEntry.cs" />
     <Compile Include="Engine\Files\FilesCollection.cs" />
     <Compile Include="Query\Query.cs" />

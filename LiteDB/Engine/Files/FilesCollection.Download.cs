@@ -9,13 +9,29 @@ namespace LiteDB
     public partial class FilesCollection
     {
         /// <summary>
+        /// Copy all file content to a steam
+        /// </summary>
+        public void Download(string key, Stream stream)
+        {
+            if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("key");
+            if (stream == null) throw new ArgumentNullException("stream");
+
+            using (var s = this.OpenRead(key))
+            {
+                if (s == null) throw new LiteDBException("File not found");
+
+                s.CopyTo(stream);
+            }
+        }
+
+        /// <summary>
         /// Load data inside storage and copy to stream
         /// </summary>
-        public LiteFileStream OpenRead(string id)
+        public LiteFileStream OpenRead(string key)
         {
-            if (string.IsNullOrEmpty(id)) throw new ArgumentNullException("id");
+            if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("key");
 
-            var doc = _col.FindById(id);
+            var doc = _col.FindById(key);
 
             if (doc == null) return null;
 

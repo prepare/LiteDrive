@@ -92,21 +92,21 @@ namespace UnitTest
 
                 foreach (var f in db.Files.All())
                 {
-                    Debug.Print(f.Id);
-                    f.SaveAs(db, @"C:\temp\restore\" + f.Id, true);
+                    Debug.Print(f.Key);
+                    f.SaveAs(db, @"C:\temp\restore\" + f.Key, true);
                 }
 
                 var first5 = db.Files.All().Take(5);
 
                 foreach(var f in first5)
-                    db.Files.Delete(f.Id);
+                    db.Files.Delete(f.Key);
 
                 Directory.CreateDirectory(@"C:\temp\restore2");
 
                 foreach (var f in db.Files.All())
                 {
-                    Debug.Print(f.Id);
-                    f.SaveAs(db, @"C:\temp\restore2\" + f.Id, true);
+                    Debug.Print(f.Key);
+                    f.SaveAs(db, @"C:\temp\restore2\" + f.Key, true);
                 }
 
             }

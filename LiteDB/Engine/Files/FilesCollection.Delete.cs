@@ -13,11 +13,11 @@ namespace LiteDB
         /// <summary>
         /// Delete a file inside datafile and all metadata related
         /// </summary>
-        public bool Delete(string id)
+        public bool Delete(string key)
         {
-            if (string.IsNullOrEmpty(id)) throw new ArgumentNullException("id");
+            if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("key");
 
-            var doc = _col.FindById(id);
+            var doc = _col.FindById(key);
 
             if (doc == null) return false;
 
@@ -36,7 +36,7 @@ namespace LiteDB
                 _engine.Data.DeleteStreamData(entry.PageID);
 
                 // delete FileEntry document
-                _col.Delete(id);
+                _col.Delete(key);
 
                 _engine.Transaction.Commit();
             }

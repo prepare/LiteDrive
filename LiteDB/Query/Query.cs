@@ -174,6 +174,5 @@ namespace LiteDB
 
             throw new NotImplementedException();
         }
-
     }
 }

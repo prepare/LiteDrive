@@ -6,7 +6,7 @@ using System.Text;
 
 namespace LiteDB
 {
-    public partial class Collection
+    public partial class Collection<T>
     {
         /// <summary>
         /// Delete a item - returns false if not found id
