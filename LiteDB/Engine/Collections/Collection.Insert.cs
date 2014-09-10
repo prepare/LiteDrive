@@ -11,12 +11,13 @@ namespace LiteDB
         /// <summary>
         /// Insert a object on collection using a key
         /// </summary>
-        public virtual void Insert(object id, BsonDocument doc)
+        public virtual void Insert(object id, T document)
         {
             if (id == null) throw new ArgumentNullException("id");
-            if (doc == null) throw new ArgumentNullException("doc");
+            if (document == null) throw new ArgumentNullException("document");
 
             // serialize object
+            var doc = new BsonDocument(document);
             var bytes = doc.ToBson();
 
             if (bytes.Length > BsonDocument.MAX_DOCUMENT_SIZE)

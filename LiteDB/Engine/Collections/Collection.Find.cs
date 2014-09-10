@@ -8,20 +8,20 @@ namespace LiteDB
 {
     public partial class Collection<T>
     {
-        public BsonDocument FindById(object id)
+        public T FindById(object id)
         {
             var col = this.GetCollectionPage();
 
             var node = _engine.Indexer.FindOne(col.PK, id);
 
-            if (node == null) return null;
+            if (node == null) return default(T);
 
             var dataBlock = _engine.Data.Read(node.DataBlock, true);
 
-            return new BsonDocument(dataBlock.Data);
+            return new BsonDocument(dataBlock.Data).To<T>();
         }
 
-        public BsonDocument FindOne(Query query)
+        public T FindOne(Query query)
         {
             return this.Find(query).FirstOrDefault();
         }
@@ -29,7 +29,7 @@ namespace LiteDB
         /// <summary>
         /// Find objects inside a collection using a index. Index must exists
         /// </summary>
-        public IEnumerable<BsonDocument> Find(Query query)
+        public IEnumerable<T> Find(Query query)
         {
             var col = this.GetCollectionPage();
 
@@ -41,7 +41,7 @@ namespace LiteDB
 
                 var doc = new BsonDocument(dataBlock.Data);
 
-                yield return doc;
+                yield return doc.To<T>();
             }
         }
 

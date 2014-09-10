@@ -11,10 +11,10 @@ namespace LiteDB
         /// <summary>
         /// Update object in collection
         /// </summary>
-        public virtual bool Update(object id, T doc)
+        public virtual bool Update(object id, T document)
         {
             if (id == null) throw new ArgumentNullException("id");
-            if (doc == null) throw new ArgumentNullException("doc");
+            if (document == null) throw new ArgumentNullException("doc");
 
             var col = this.GetCollectionPage();
 
@@ -24,7 +24,8 @@ namespace LiteDB
             if (indexNode == null) return false;
 
             // serialize object
-            var bytes = doc is BsonDocument ? ((BsonDocument)doc).ToBson() : new BsonDocument(doc).ToBson();
+            var doc = new BsonDocument(document);
+            var bytes = doc.ToBson();
 
             if (bytes.Length > BsonDocument.MAX_DOCUMENT_SIZE)
                 throw new LiteDBException("Object exceed limit of " + Math.Truncate(BsonDocument.MAX_DOCUMENT_SIZE / 1024m) + " Kb");

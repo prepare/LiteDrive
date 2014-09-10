@@ -15,15 +15,15 @@ namespace LiteDB
         public string Key { get; set; }
         public int Length { get; set; }
         public DateTime UploadDate { get; set; }
-        public NameValueCollection Metadata { get; set; }
+        public Dictionary<string, string> Metadata { get; set; }
 
         internal uint PageID { get; set; }
 
-        internal FileEntry(string key, NameValueCollection metadata)
+        internal FileEntry(string key, Dictionary<string, string> metadata)
         {
             this.PageID = uint.MaxValue;
             this.Key = key;
-            this.Metadata = metadata == null ? new NameValueCollection() : metadata;
+            this.Metadata = metadata == null ? new Dictionary<string, string>() : metadata;
             this.UploadDate = DateTime.Now;
         }
 
@@ -32,7 +32,7 @@ namespace LiteDB
             this.Key = doc["Key"].AsString;
             this.Length = doc["Length"].AsInt;
             this.UploadDate = doc["UploadDate"].AsDateTime;
-            this.Metadata = (NameValueCollection)doc["Metadata"].RawValue;
+            this.Metadata = ((Dictionary<string, object>)doc["Metadata"].RawValue).ToDictionary(x => x.Key, x => x.Value.ToString());
             this.PageID = (uint)doc["PageID"].RawValue;
         }
 
@@ -43,7 +43,7 @@ namespace LiteDB
             doc["Key"] = new BsonValue(this.Key);
             doc["Length"] = new BsonValue(this.Length);
             doc["UploadDate"] = new BsonValue(this.UploadDate);
-            doc["Metadata"] = new BsonValue(this.Metadata);
+            doc["Metadata"] = new BsonObject(this.Metadata);
             doc["PageID"] = new BsonValue(this.PageID);
 
             return doc;

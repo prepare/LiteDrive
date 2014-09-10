@@ -28,12 +28,7 @@ namespace LiteDB
 
         public BsonType Type { get; private set; }
 
-        public string[] Keys
-        {
-            get { return this.Type == BsonType.Object ? ((Dictionary<string, object>)_value).Keys.ToArray() : new string[0]; }
-        }
-
-        #region "this" operators
+        #region "this" operators for BsonObject
 
         public BsonValue this[string name]
         {
@@ -86,37 +81,42 @@ namespace LiteDB
 
         public BsonArray AsArray
         {
-            get { return this.Type == BsonType.Array ? new BsonArray(_value) : null; }
+            get { return this.Type == BsonType.Array ? new BsonArray((List<object>)this.RawValue) : null; }
+        }
+
+        public BsonObject AsObject
+        {
+            get { return this.Type == BsonType.Object ? new BsonObject((Dictionary<string, object>)this.RawValue) : null; }
         }
 
         public string AsString
         {
-            get { return Type == BsonType.String ? (string)_value : null; }
+            get { return this.Type == BsonType.String ? (string)this.RawValue : null; }
         }
 
         public decimal AsDecimal
         {
-            get { return Type == BsonType.Number ? Convert.ToDecimal(_value) : 0; }
+            get { return this.Type == BsonType.Number ? Convert.ToDecimal(this.RawValue) : 0; }
         }
 
         public int AsInt
         {
-            get { return Type == BsonType.Number ? Convert.ToInt32(_value) : 0; }
+            get { return this.Type == BsonType.Number ? Convert.ToInt32(this.RawValue) : 0; }
         }
 
         public bool AsBoolean
         {
-            get { return Type == BsonType.Boolean ? (bool)_value : false; }
+            get { return this.Type == BsonType.Boolean ? (bool)this.RawValue : false; }
         }
 
         public DateTime AsDateTime
         {
-            get { return Type == BsonType.DateTime ? (DateTime)_value : DateTime.MinValue; }
+            get { return this.Type == BsonType.DateTime ? (DateTime)this.RawValue : DateTime.MinValue; }
         }
 
         public Guid AsGuid
         {
-            get { return Type == BsonType.Guid ? (Guid)_value : Guid.Empty; }
+            get { return this.Type == BsonType.Guid ? (Guid)this.RawValue : Guid.Empty; }
         }
 
         #endregion

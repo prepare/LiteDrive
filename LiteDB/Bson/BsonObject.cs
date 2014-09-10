@@ -14,5 +14,20 @@ namespace LiteDB
             : base(new Dictionary<string, object>())
         {
         }
+
+        public BsonObject(Dictionary<string, object> obj)
+            : base(obj)
+        {
+        }
+
+        public BsonObject(Dictionary<string, string> obj)
+            : base(obj.ToDictionary(x => x.Key, x => (object)x.Value))
+        {
+        }
+
+        public string[] Keys
+        {
+            get { return ((Dictionary<string, object>)this.RawValue).Keys.ToArray(); }
+        }
     }
 }

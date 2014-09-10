@@ -15,6 +15,11 @@ namespace LiteDB
         {
         }
 
+        public BsonArray(List<object> array)
+            : base(array)
+        {
+        }
+
         public void Add(object value)
         {
             if (this.Type != BsonType.Array) throw new LiteDBException("Bson value is not an array");
@@ -44,8 +49,6 @@ namespace LiteDB
         {
             get
             {
-                if (this.Type != BsonType.Array) return this.Keys.Length;
-
                 var array = (List<object>)this.RawValue;
                 return array.Count;
             }

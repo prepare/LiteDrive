@@ -8,5 +8,15 @@ using System.Text;
 
 namespace LiteDB
 {
-    public enum BsonType { Null, String, Object, Array, Number, Boolean, DateTime, Guid }
+    public enum BsonType
+    { 
+        Null, 
+        String, 
+        Object, 
+        Array, 
+        Number, 
+        Boolean, 
+        DateTime, 
+        Guid
+    }
 }
