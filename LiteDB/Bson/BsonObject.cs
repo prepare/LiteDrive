@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,23 +12,18 @@ namespace LiteDB
     public class BsonObject : BsonValue
     {
         public BsonObject()
-            : base(new Dictionary<string, object>())
+            : base(new JObject())
         {
         }
 
-        public BsonObject(Dictionary<string, object> obj)
+        internal BsonObject(JObject obj)
             : base(obj)
         {
         }
 
-        public BsonObject(Dictionary<string, string> obj)
-            : base(obj.ToDictionary(x => x.Key, x => (object)x.Value))
+        public BsonObject(object obj)
+            : base(JObject.FromObject(obj))
         {
-        }
-
-        public string[] Keys
-        {
-            get { return ((Dictionary<string, object>)this.RawValue).Keys.ToArray(); }
         }
     }
 }

@@ -32,8 +32,8 @@ namespace LiteDB
             this.Key = doc["Key"].AsString;
             this.Length = doc["Length"].AsInt;
             this.UploadDate = doc["UploadDate"].AsDateTime;
-            this.Metadata = ((Dictionary<string, object>)doc["Metadata"].RawValue).ToDictionary(x => x.Key, x => x.Value.ToString());
-            this.PageID = (uint)doc["PageID"].RawValue;
+            this.Metadata = doc["Metadata"].As<Dictionary<string, string>>();
+            this.PageID = (uint)doc["PageID"].As<uint>();
         }
 
         internal BsonDocument ToBson()

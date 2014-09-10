@@ -13,8 +13,9 @@ namespace LiteDB
         Null, 
         String, 
         Object, 
-        Array, 
-        Number, 
+        Array,
+        Integer,
+        Decimal,
         Boolean, 
         DateTime, 
         Guid

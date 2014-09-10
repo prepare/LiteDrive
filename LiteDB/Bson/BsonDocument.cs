@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Bson;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,49 +12,51 @@ using System.Text;
 namespace LiteDB
 {
     /// <summary>
-    /// Represent a document schemeless to use in collections. Based on Dictionary<string, object>
+    /// Represent a document schemeless to use in collections. Based on JObject
     /// </summary>
-    public class BsonDocument : BsonValue
+    public class BsonDocument : BsonObject
     {
         public const int MAX_DOCUMENT_SIZE = 256 * 1024; // limits in 256 max document size to avoid large documents, memory usage and slow performance
 
         public BsonDocument()
-            : base(new BsonObject())
+            : base()
         {
         }
 
         public BsonDocument(object obj)
-            : this()
+            : base(obj)
         {
-            //this.Append(anonymousObject);
         }
 
         public BsonDocument(string json)
         {
-            // JavaScriptSerializer a;
-            // System.Web.Extensions
-
-            JObject o = JObject.Parse(json);
-
-            o.ToObject<BsonDocument>();
-
-            
-
-
+            this.Value = JObject.Parse(json);
         }
 
         public BsonDocument(byte[] data)
         {
+            using (var reader = new BsonReader(new MemoryStream(data)))
+            {
+                this.Value = JObject.ReadFrom(reader);
+            }
         }
 
         public byte[] ToBson()
         {
-            return null;
+            using (var stream = new MemoryStream())
+            {
+                using (var writer = new BsonWriter(stream))
+                {
+                    this.Value.WriteTo(writer);
+
+                    return stream.ToArray();
+                }
+            }
         }
 
         public string ToJson()
         {
-            return "";
+            return JsonConvert.SerializeObject(this.Value);
         }
 
         public T To<T>()
@@ -63,12 +67,12 @@ namespace LiteDB
                 return (T)(object)this;
             }
 
-            return default(T);
+            return this.Value.ToObject<T>();
         }
 
         public object GetFieldValue(string key)
         {
-            return null;
+            return this.Value[key].ToObject(typeof(object));
         }
     }
 }

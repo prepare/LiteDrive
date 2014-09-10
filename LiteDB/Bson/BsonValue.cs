@@ -14,19 +14,41 @@ namespace LiteDB
     /// </summary>
     public class BsonValue
     {
-        private object _value = null;
+        internal JToken Value = null;
 
         public BsonValue()
         {
-            this.RawValue = null;
+            this.Value = JValue.CreateNull();
         }
 
         public BsonValue(object value)
         {
-            this.RawValue = value;
+            this.Value = JToken.FromObject(value);
         }
 
-        public BsonType Type { get; private set; }
+        internal BsonValue(JToken value)
+        {
+            Value = value;
+        }
+
+        public BsonType Type
+        {
+            get
+            {
+                switch (this.Value.Type)
+                {
+                    case JTokenType.Array: return BsonType.Array;
+                    case JTokenType.Boolean: return BsonType.Boolean;
+                    case JTokenType.Date: return BsonType.DateTime;
+                    case JTokenType.Guid: return BsonType.Guid;
+                    case JTokenType.Null: return BsonType.Null;
+                    case JTokenType.String: return BsonType.String;
+                    case JTokenType.Integer: return BsonType.Integer;
+                    case JTokenType.Float: return BsonType.Decimal;
+                    default: return BsonType.Object;
+                }
+            }
+        }
 
         #region "this" operators for BsonObject
 
@@ -36,15 +58,15 @@ namespace LiteDB
             {
                 if(this.Type != BsonType.Object) throw new LiteDBException("Bson value is not an object");
 
-                var dict = (Dictionary<string, object>)_value;
-                return new BsonValue(dict.Get(name));
+                var obj = (JObject)this.Value;
+                return new BsonValue(obj.GetValue(name));
             }
             set
             {
                 if (this.Type != BsonType.Object) throw new LiteDBException("Bson value is not an object");
 
-                var dict = (Dictionary<string, object>)_value;
-                dict[name] = value.RawValue;
+                var obj = (JObject)this.Value;
+                obj[name] = value.Value;
             }
         }
 
@@ -54,15 +76,15 @@ namespace LiteDB
             {
                 if(this.Type != BsonType.Array) throw new LiteDBException("Bson value is not an array");
 
-                var array = (List<object>)_value;
+                var array = (JArray)this.Value;
                 return new BsonValue(array.ElementAt(index));
             }
             set
             {
                 if(this.Type != BsonType.Array) throw new LiteDBException("Bson value is not an array");
 
-                var array = (List<object>)_value;
-                array[index] = value.RawValue;
+                var array = (JArray)Value;
+                array[index] = value.Value;
             }
         }
 
@@ -81,42 +103,47 @@ namespace LiteDB
 
         public BsonArray AsArray
         {
-            get { return this.Type == BsonType.Array ? new BsonArray((List<object>)this.RawValue) : null; }
+            get { return this.Type == BsonType.Array ? new BsonArray((JArray)this.Value) : null; }
         }
 
         public BsonObject AsObject
         {
-            get { return this.Type == BsonType.Object ? new BsonObject((Dictionary<string, object>)this.RawValue) : null; }
+            get { return this.Type == BsonType.Object ? new BsonObject((JObject)this.Value) : null; }
         }
 
         public string AsString
         {
-            get { return this.Type == BsonType.String ? (string)this.RawValue : null; }
+            get { return this.Type == BsonType.String ? this.Value.Value<string>() : null; }
         }
 
         public decimal AsDecimal
         {
-            get { return this.Type == BsonType.Number ? Convert.ToDecimal(this.RawValue) : 0; }
+            get { return this.Type == BsonType.Decimal ? this.Value.Value<decimal>() : 0; }
         }
 
         public int AsInt
         {
-            get { return this.Type == BsonType.Number ? Convert.ToInt32(this.RawValue) : 0; }
+            get { return this.Type == BsonType.Integer ? this.Value.Value<int>() : 0; }
         }
 
         public bool AsBoolean
         {
-            get { return this.Type == BsonType.Boolean ? (bool)this.RawValue : false; }
+            get { return this.Type == BsonType.Boolean ? this.Value.Value<bool>() : false; }
         }
 
         public DateTime AsDateTime
         {
-            get { return this.Type == BsonType.DateTime ? (DateTime)this.RawValue : DateTime.MinValue; }
+            get { return this.Type == BsonType.DateTime ? this.Value.Value<DateTime>() : DateTime.MinValue; }
         }
 
         public Guid AsGuid
         {
-            get { return this.Type == BsonType.Guid ? (Guid)this.RawValue : Guid.Empty; }
+            get { return this.Type == BsonType.Guid ? this.Value.Value<Guid>() : Guid.Empty; }
+        }
+
+        public T As<T>()
+        {
+            return this.Value.ToObject<T>();
         }
 
         #endregion
@@ -133,9 +160,24 @@ namespace LiteDB
             get { return this.Type == BsonType.Array; }
         }
 
-        public bool IsNumber
+        public bool IsInteger
         {
-            get { return this.Type == BsonType.Number; }
+            get { return this.Type == BsonType.Integer; }
+        }
+
+        public bool IsDecimal
+        {
+            get { return this.Type == BsonType.Decimal; }
+        }
+
+        public bool IsGuid
+        {
+            get { return this.Type == BsonType.Guid; }
+        }
+
+        public bool IsDateTime
+        {
+            get { return this.Type == BsonType.DateTime; }
         }
 
         public bool IsBoolean
@@ -150,45 +192,7 @@ namespace LiteDB
 
         #endregion
 
-        #region Raw Value
-
-        public object RawValue
-        {
-            get { return _value; }
-            set
-            {
-                _value = value;
-
-                if (value == null)
-                    this.Type = BsonType.Null;
-                else if (value is bool)
-                    this.Type = BsonType.Boolean;
-                else if (value is string)
-                    this.Type = BsonType.String;
-                else if (value is byte || value is short || value is int || value is long || value is ushort || value is uint || value is ulong || value is decimal || value is double || value is float)
-                    this.Type = BsonType.Number;
-                else if (value is List<object>)
-                    this.Type = BsonType.Array;
-                else if (value is DateTime)
-                    this.Type = BsonType.DateTime;
-                else if (value is Guid)
-                    this.Type = BsonType.Guid;
-                else if (value is Dictionary<string, object>)
-                    this.Type = BsonType.Object;
-                else if (value is BsonValue)
-                {
-                    var v = (BsonValue)_value;
-                    this.Type = v.Type;
-                    _value = v.RawValue;
-                }
-                else
-                    throw new LiteDBException("Bson value type unknow: " + value.GetType().FullName);
-            }
-        }
-
-        #endregion
-
-        #region Converters
+        #region Operators
 
         public static implicit operator string(BsonValue value)
         {
