@@ -20,9 +20,6 @@ namespace LiteDB
             var doc = new BsonDocument(document);
             var bytes = doc.ToBson();
 
-            if (bytes.Length > BsonDocument.MAX_DOCUMENT_SIZE)
-                throw new LiteDBException("Object exceed limit of " + Math.Truncate(BsonDocument.MAX_DOCUMENT_SIZE / 1024m) + " Kb");
-
             _engine.Transaction.Begin();
 
             try

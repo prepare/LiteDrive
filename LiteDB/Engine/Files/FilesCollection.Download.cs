@@ -18,7 +18,7 @@ namespace LiteDB
 
             using (var s = this.OpenRead(key))
             {
-                if (s == null) throw new LiteDBException("File not found");
+                if (s == null) throw new LiteException("File not found");
 
                 s.CopyTo(stream);
             }

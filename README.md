@@ -150,7 +150,7 @@ Connection string options to initialize LiteEngine class:
 
 ## Dependency
 
-LiteDB has [Json.net](http://james.newtonking.com/json) dependency for convert .NET Objects from/to  Json/Bson objects and create documents. Using NuGet, this package will install together.
+LiteDB has [Json.NET](http://james.newtonking.com/json) dependency for convert .NET Objects from/to  Json/Bson objects and create documents. Using NuGet, this package will install together.
 
 ## Roadmap
 

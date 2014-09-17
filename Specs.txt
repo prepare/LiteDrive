@@ -1,0 +1,92 @@
+--------------------------------------------------------------------------------------
+This file is used to organize my thoughts. It´s internal use, so will be in Portuguese
+--------------------------------------------------------------------------------------
+
+Proximos passos
+===============
+- Verificar se o BsonDocument está bom. Acho que precisa melhorar e ficar mais "claro"
+- Melhorar as collections de Files, trocar nome?
+- Implementar Repository Pattern (DbContext, Repository, Entity)
+- Implementar BsonDocument com _id obrigatorio? Todos os bancos tem isso!
+
+
+
+- Implementar melhores Exception - Usar Code pra cada (tipo oracle/sql server) -> throw LiteException.DatabaseNotFound(name);
+- LateBound no abrir do arquivo
+- Implementar mais testes
+
+** ACHO QUE NÃO DEVE HAVER NOVAS IMPLEMENTAÇÔES ATÉ ESTA VERSAO ESTAR BEM SEGURA **
+** ----------------------------------------------------------------------------- **
+
+- Implementar exclusão: DropCollection e DropIndex
+- Implementar tamanho medio de objeto, total de espaco alocado de dados, de indice, total usado, na collection
+- Implementar Linq. Acho que seria até mais facil implementar SQL/HQL = Libs: relinq, IQtoolkit, LinqExtender, http://blogs.msdn.com/b/mattwar/archive/2007/07/31/linq-building-an-iqueryable-provider-part-ii.aspx
+- Implementar indice Compound (multiplos campos) - Este é "relativamente" simples
+- Implementar indice MultiKey (em array) - Este é importante, pois abre caminho pro TextSearch
+- Implementar Full TextSearch - 1 por collection
+- Shirink / Reindex
+- Initial size - tamanho inicial do banco - tentando enviar fragmentação de disco
+- Encrypt - possibilidade de cryptografar os dados com uma senha
+- Estatisticas: Total de páginas por tipo, Total/média de dataBlocks/indexNodes, Total  de espaco free (usavel) total de dados
+- Ideia da Calc.cs - Parametros: Encoding = UTF8, Case Sensitive = false, EmptyString==Null
+- RestService? Acho que outra DLL
+
+===============================================================================================================================
+
+# Transaction
+2) Abre o arquivo .fdb em modo write shared
+3) Lock o arquivo .fdb
+4) Faz as operações deixando header + N paginas sujas....
+5) Cria o arquivo chamado <filename>.redo em modo exclusive write
+6) Escreve todas as paginas sujas no arquivo <filename>.redo
+6) Marca o byte 1000 = 01HEX no redo informando que "completei a transacao"
+7) Escreve, no .fdb, as paginas sujas
+8) Desaloca o arquivo .redo e exclui o arquivo .redo
+9) Unlock no .fdb
+
+# Recovery Mode
+- Executar ao abrir um FileDB
+- Executar quando conseguir um Lock para transacao
+
+1) Antes de abrir o .fdb, verifica se existe um arquivo chamado <filename>.redo (se não existir, não entra em Recovery)
+2) Abre o arquivo .redo em exclusive write (Se não poder, não entra em Recovery)
+3) Se o byte 1000 != 01HEX, fecha o arquivo e exclui o .redo (não entra em Recovery - A ultima transacao não foi completa)
+4) Abre o .fdb em modo de escrita (se ainda não aberto)
+5) Vai lendo as paginas do .redo e gravando no .fdb
+6) Fecha e exclui arquivo .redo
+
+// Write Shared = (FileAccess.ReadWrite + FileShare.ReadWrite)
+// Exclusive Write = (FileAccess.ReadWrite + FileShare.None)
+
+tipos de dados - tamanhos
+http://msdn.microsoft.com/en-us/library/47zceaw7(v=vs.90).aspx
+
+Skip List bi-direcional
+http://dj1.willowmail.com/~jeske/Projects/BDSkipList/
+
+
+## Parametros que poderia ser ajustaveis, mas vou usar FIXO mesmo
+    - PageSize
+    - PCT Free
+    - Encoding
+    - Equals String (case senstive)
+    - AnalizerBR - AnalizerUS
+    - Convert WhiteEmpty in null
+
+## Servidor RESTFul
+    - A partir de um Handler (ashx)
+    
+    var rest = new LiteRest("/db", "arquivo.judb");
+    rest.Resource("POST /@collection", (db, ctx) => { ... });
+    rest.Resource("GET /@collection/@id", (db, ctx) => { ... });
+    rest.Process(Request, Response);
+
+    
+### TIPS - Test in VS2012
+
+- Para poder testar metodos/classes internal, colocar no projeto a ser testado:
+[assembly: InternalsVisibleTo("CalculadoraUnitTest")]
+
+- Para escrever codigo na DebugWindow, usar "Debug.Print(...")
+- Para desabilitar mensagens chatas, clicar com o direito sobre a tela de Debug Window com o botão direito e remover todas as opções
+- A mensagem no debug só aparece quando se roda o teste em modo debug: clica no metodo com o direto e seleciona "Debug Tests"

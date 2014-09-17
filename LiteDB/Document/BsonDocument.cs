@@ -24,17 +24,24 @@ namespace LiteDB
         }
 
         public BsonDocument(object obj)
-            : base(obj)
         {
+            if (obj == null) throw new ArgumentNullException("obj");
+
+            // if obj is BsonDocument, just get JToken Value instance. Do not create a copy of JToken
+            this.Value = obj is BsonDocument ? ((BsonDocument)obj).Value : JObject.FromObject(obj);
         }
 
         public BsonDocument(string json)
         {
+            if (string.IsNullOrEmpty(json)) throw new ArgumentNullException("json");
+
             this.Value = JObject.Parse(json);
         }
 
         public BsonDocument(byte[] data)
         {
+            if (data == null || data.Length == 0) throw new ArgumentNullException("data");
+
             using (var reader = new BsonReader(new MemoryStream(data)))
             {
                 this.Value = JObject.ReadFrom(reader);
@@ -49,7 +56,12 @@ namespace LiteDB
                 {
                     this.Value.WriteTo(writer);
 
-                    return stream.ToArray();
+                    var bytes = stream.ToArray();
+
+                    if (bytes.Length > BsonDocument.MAX_DOCUMENT_SIZE)
+                        throw new LiteException("Object exceed limit of " + Math.Truncate(BsonDocument.MAX_DOCUMENT_SIZE / 1024m) + " Kb");
+
+                    return bytes;
                 }
             }
         }
@@ -77,6 +89,17 @@ namespace LiteDB
             if (value.Type == BsonType.Null) return null;
             
             return value.Value.ToObject(typeof(object));
+        }
+
+        /// <summary>
+        /// Create a deep clone of a BsonDocument
+        /// </summary>
+        public BsonDocument Clone()
+        {
+            var doc = new BsonDocument();
+            doc.Value = this.Value.DeepClone();
+
+            return doc;
         }
     }
 }

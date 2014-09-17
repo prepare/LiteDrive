@@ -53,18 +53,20 @@ namespace UnitTest
 
                 Dump.Pages(db ,"after file");
 
-                var f = db.Files.FindById("my/foto1.jpg");
+                var f = db.Files.FindByKey("my/foto1.jpg");
 
-                Debug.Print("Size: " + f.Length);
-                Debug.Print("Meta: " + f.Metadata["my-data"]);
-                Debug.Print("Date: " + f.UploadDate);
+                Assert.AreEqual(5000, f.Length);
+                Assert.AreEqual("Google LiteDB", f.Metadata["my-data"]);
 
                 var mem = new MemoryStream();
 
                 f.OpenRead(db).CopyTo(mem);
 
-                Debug.Print("Size in mem: " + mem.Length);
-                Debug.Print("All bytes is ZERO: " + mem.ToArray().Count(x => x == 0));
+                // file real size after read all bytes
+                Assert.AreEqual(5000, mem.Length);
+
+                // all bytes are 0
+                Assert.AreEqual(5000, mem.ToArray().Count(x => x == 0));
 
                 db.Files.Delete("my/foto1.jpg");
 
@@ -88,34 +90,26 @@ namespace UnitTest
 
             using (var db = new LiteEngine(dbpath))
             {
-                Directory.CreateDirectory(@"C:\temp\restore");
+                Directory.CreateDirectory(@"C:\temp\pictures-50");
 
                 foreach (var f in db.Files.All())
                 {
-                    Debug.Print(f.Key);
-                    f.SaveAs(db, @"C:\temp\restore\" + f.Key, true);
+                    f.SaveAs(db, @"C:\temp\pictures-50\" + f.Key, true);
                 }
 
-                var first5 = db.Files.All().Take(5);
+                var delete5 = db.Files.All().Take(5);
 
-                foreach(var f in first5)
+                foreach(var f in delete5)
                     db.Files.Delete(f.Key);
 
-                Directory.CreateDirectory(@"C:\temp\restore2");
+                Directory.CreateDirectory(@"C:\temp\pictures-45");
 
                 foreach (var f in db.Files.All())
                 {
                     Debug.Print(f.Key);
-                    f.SaveAs(db, @"C:\temp\restore2\" + f.Key, true);
+                    f.SaveAs(db, @"C:\temp\pictures-45\" + f.Key, true);
                 }
-
             }
-
         }
-
-        public void Files_Delete()
-        {
-        }
-
     }
 }

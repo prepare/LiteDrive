@@ -16,16 +16,6 @@ namespace LiteDB
     {
         internal JToken Value = null;
 
-        internal BsonValue()
-        {
-            this.Value = new JObject();
-        }
-
-        internal BsonValue(object value)
-        {
-            this.Value = JToken.FromObject(value);
-        }
-
         internal BsonValue(JToken value)
         {
             this.Value = value;
@@ -35,16 +25,20 @@ namespace LiteDB
         {
             get
             {
+                if (this.Value == null) return BsonType.Null;
+
                 switch (this.Value.Type)
                 {
                     case JTokenType.Array: return BsonType.Array;
                     case JTokenType.Boolean: return BsonType.Boolean;
-                    case JTokenType.Date: return BsonType.DateTime;
-                    case JTokenType.Guid: return BsonType.Guid;
                     case JTokenType.Null: return BsonType.Null;
                     case JTokenType.String: return BsonType.String;
                     case JTokenType.Integer: return BsonType.Integer;
-                    case JTokenType.Float: return BsonType.Decimal;
+                    case JTokenType.Float: return BsonType.Float;
+                    case JTokenType.Guid: return BsonType.String;
+                    case JTokenType.Date: return BsonType.String;
+                    case JTokenType.TimeSpan: return BsonType.String;
+                    case JTokenType.Uri: return BsonType.String;
                     default: return BsonType.Object;
                 }
             }
@@ -56,14 +50,14 @@ namespace LiteDB
         {
             get
             {
-                if(this.Type != BsonType.Object) throw new LiteDBException("Value is not an object");
+                if(this.Type != BsonType.Object) throw new LiteException("Value is not an object");
 
                 var obj = (JObject)this.Value;
                 return new BsonValue(obj.GetValue(name));
             }
             set
             {
-                if (this.Type != BsonType.Object) throw new LiteDBException("Value is not an object");
+                if (this.Type != BsonType.Object) throw new LiteException("Value is not an object");
 
                 var obj = (JObject)this.Value;
                 obj[name] = value.Value;
@@ -74,27 +68,18 @@ namespace LiteDB
         {
             get
             {
-                if(this.Type != BsonType.Array) throw new LiteDBException("Value is not an array");
+                if(this.Type != BsonType.Array) throw new LiteException("Value is not an array");
 
                 var array = (JArray)this.Value;
                 return new BsonValue(array.ElementAt(index));
             }
             set
             {
-                if(this.Type != BsonType.Array) throw new LiteDBException("Value is not an array");
+                if(this.Type != BsonType.Array) throw new LiteException("Value is not an array");
 
                 var array = (JArray)Value;
                 array[index] = value.Value;
             }
-        }
-
-        /// <summary>
-        /// Same as doc[key] = value but with fluent api. Returns same object
-        /// </summary>
-        public BsonValue Append(string key, object value)
-        {
-            this[key] = new BsonValue(value);
-            return this;
         }
 
         #endregion
@@ -105,7 +90,7 @@ namespace LiteDB
         {
             get 
             {
-                if (this.Type != BsonType.Array) throw new LiteDBException("Value is not an array");
+                if (this.Type != BsonType.Array) throw new LiteException("Value is not an array");
                 return new BsonArray((JArray)this.Value);
             }
         }
@@ -114,7 +99,7 @@ namespace LiteDB
         {
             get
             {
-                if(this.Type != BsonType.Object) throw new LiteDBException("Value is not an object");
+                if(this.Type != BsonType.Object) throw new LiteException("Value is not an object");
 
                 return new BsonObject((JObject)this.Value);
             }
@@ -127,12 +112,12 @@ namespace LiteDB
 
         public decimal AsDecimal
         {
-            get { return this.Type == BsonType.Decimal ? this.Value.Value<decimal>() : 0; }
+            get { return this.Type == BsonType.Integer || this.Type == BsonType.Float ? this.Value.Value<decimal>() : 0; }
         }
 
         public int AsInt
         {
-            get { return this.Type == BsonType.Integer ? this.Value.Value<int>() : 0; }
+            get { return this.Type == BsonType.Integer || this.Type == BsonType.Float ? this.Value.Value<int>() : 0; }
         }
 
         public bool AsBoolean
@@ -142,12 +127,12 @@ namespace LiteDB
 
         public DateTime AsDateTime
         {
-            get { return this.Type == BsonType.DateTime ? this.Value.Value<DateTime>() : DateTime.MinValue; }
+            get { return this.Type == BsonType.String ? this.Value.ToObject<DateTime>() : DateTime.MinValue; }
         }
 
         public Guid AsGuid
         {
-            get { return this.Type == BsonType.Guid ? this.Value.Value<Guid>() : Guid.Empty; }
+            get { return this.Type == BsonType.String ? this.Value.ToObject<Guid>() : Guid.Empty; }
         }
 
         public T As<T>()
@@ -174,19 +159,9 @@ namespace LiteDB
             get { return this.Type == BsonType.Integer; }
         }
 
-        public bool IsDecimal
+        public bool IsFloat
         {
-            get { return this.Type == BsonType.Decimal; }
-        }
-
-        public bool IsGuid
-        {
-            get { return this.Type == BsonType.Guid; }
-        }
-
-        public bool IsDateTime
-        {
-            get { return this.Type == BsonType.DateTime; }
+            get { return this.Type == BsonType.Float; }
         }
 
         public bool IsBoolean

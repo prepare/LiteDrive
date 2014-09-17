@@ -33,6 +33,8 @@ namespace LiteDB
     /// </summary>
     internal struct IndexKey : IComparable<IndexKey>
     {
+        public const int MAX_LENGTH_SIZE = 255;
+
         public readonly object Value;
 
         public readonly IndexDataType Type;
@@ -44,31 +46,31 @@ namespace LiteDB
             this.Value = value;
 
             // null
-            if (value == null) { Type = IndexDataType.Null; Length = 0; }
+            if (value == null) { this.Type = IndexDataType.Null; this.Length = 0; }
 
             // int
-            else if (value is Byte) { Type = IndexDataType.Byte; Length = 1; }
-            else if (value is Int16) { Type = IndexDataType.Int16; Length = 2; }
-            else if (value is UInt16) { Type = IndexDataType.UInt16; Length = 2; }
-            else if (value is Int32) { Type = IndexDataType.Int32; Length = 4; }
-            else if (value is UInt32) { Type = IndexDataType.UInt32; Length = 4; }
-            else if (value is Int64) { Type = IndexDataType.Int64; Length = 8; }
-            else if (value is UInt64) { Type = IndexDataType.UInt64; Length = 8; }
+            else if (value is Byte) { this.Type = IndexDataType.Byte; this.Length = 1; }
+            else if (value is Int16) { this.Type = IndexDataType.Int16; this.Length = 2; }
+            else if (value is UInt16) { this.Type = IndexDataType.UInt16; this.Length = 2; }
+            else if (value is Int32) { this.Type = IndexDataType.Int32; this.Length = 4; }
+            else if (value is UInt32) { this.Type = IndexDataType.UInt32; this.Length = 4; }
+            else if (value is Int64) { this.Type = IndexDataType.Int64; this.Length = 8; }
+            else if (value is UInt64) { this.Type = IndexDataType.UInt64; this.Length = 8; }
 
             // decimal
-            else if (value is Single) { Type = IndexDataType.Single; Length = 4; }
-            else if (value is Double) { Type = IndexDataType.Double; Length = 8; }
-            else if (value is Decimal) { Type = IndexDataType.Decimal; Length = 16; }
+            else if (value is Single) { this.Type = IndexDataType.Single; this.Length = 4; }
+            else if (value is Double) { this.Type = IndexDataType.Double; this.Length = 8; }
+            else if (value is Decimal) { this.Type = IndexDataType.Decimal; this.Length = 16; }
 
             // string
-            else if (value is String) { Type = IndexDataType.String; Length = Encoding.UTF8.GetByteCount((string)Value) + 1 /* +1 = For String Length on store */; }
+            else if (value is String) { this.Type = IndexDataType.String; this.Length = Encoding.UTF8.GetByteCount((string)Value) + 1 /* +1 = For String Length on store */; }
 
             // Others
-            else if (value is DateTime) { Type = IndexDataType.DateTime; Length = 8; }
-            else if (value is Guid) { Type = IndexDataType.Guid; Length = 16; }
+            else if (value is DateTime) { this.Type = IndexDataType.DateTime; this.Length = 8; }
+            else if (value is Guid) { this.Type = IndexDataType.Guid; this.Length = 16; }
 
             // if not found, exception
-            else throw new NotImplementedException();
+            else throw LiteException.IndexTypeNotSupport(value.GetType());
 
             // increase "Type" byte in length
             this.Length++;
@@ -82,8 +84,8 @@ namespace LiteDB
             }
 
             // limit in 255 string byte
-            if (this.Type == IndexDataType.String && this.Length > 255)
-                throw new LiteDBException("Index key must be less than 255 bytes");
+            if (this.Type == IndexDataType.String && this.Length > MAX_LENGTH_SIZE)
+                throw LiteException.IndexKeyTooLong();
         }
 
         public int CompareTo(IndexKey other)

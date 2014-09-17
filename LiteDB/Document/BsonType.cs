@@ -10,14 +10,12 @@ namespace LiteDB
 {
     public enum BsonType
     { 
-        Null, 
-        String, 
-        Object, 
+        Null,
         Array,
+        Object, 
+        String,
         Integer,
-        Decimal,
-        Boolean, 
-        DateTime, 
-        Guid
+        Float,
+        Boolean
     }
 }

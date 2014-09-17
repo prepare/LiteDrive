@@ -22,7 +22,7 @@ namespace LiteDB
             if (doc == null) return false;
 
             if (_engine.Transaction.IsInTransaction)
-                throw new LiteDBException("Files can't be used inside a transaction.");
+                throw new LiteException("Files can't be used inside a transaction.");
 
             var entry = new FileEntry(doc);
 

@@ -79,7 +79,7 @@ namespace LiteDB
                 page.PageID = ++_cache.Header.LastPageID;
 
                 if (page.PageID > _connectionString.MaxPageID)
-                    throw new LiteDBException("Max file length excedded");
+                    throw new LiteException("Max file length excedded");
             }
 
             // if there a page before, just fix NextPageID pointer

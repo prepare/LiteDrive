@@ -12,27 +12,35 @@ namespace LiteDB
     /// </summary>
     public class FileEntry
     {
-        public string Key { get; set; }
-        public int Length { get; set; }
-        public DateTime UploadDate { get; set; }
-        public Dictionary<string, string> Metadata { get; set; }
+        public string Key { get; private set; }
+        public string Filename { get; private set; }
+        public string MimeType { get; private set; }
+        public int Length { get; internal set; }
+        public DateTime UploadDate { get; internal set; }
+        public Dictionary<string, string> Metadata { get; internal set; }
 
         internal uint PageID { get; set; }
 
-        internal FileEntry(string key, Dictionary<string, string> metadata)
+        internal FileEntry(string key, string filename, Dictionary<string, string> metadata)
         {
-            this.PageID = uint.MaxValue;
             this.Key = key;
-            this.Metadata = metadata == null ? new Dictionary<string, string>() : metadata;
+            this.Filename = filename;
+            this.MimeType = MimeTypeConverter.GetMimeType(this.Filename);
+            this.Metadata = metadata ?? new Dictionary<string, string>();
             this.UploadDate = DateTime.Now;
+
+            this.PageID = uint.MaxValue;
         }
 
         internal FileEntry(BsonDocument doc)
         {
             this.Key = doc["Key"].AsString;
+            this.Filename = doc["Filename"].AsString;
+            this.MimeType = doc["MimeType"].AsString;
             this.Length = doc["Length"].AsInt;
             this.UploadDate = doc["UploadDate"].AsDateTime;
             this.Metadata = doc["Metadata"].As<Dictionary<string, string>>();
+
             this.PageID = (uint)doc["PageID"].As<uint>();
         }
 
@@ -41,6 +49,8 @@ namespace LiteDB
             var doc = new BsonDocument();
 
             doc["Key"] = new BsonValue(this.Key);
+            doc["Filename"] = new BsonValue(this.Filename);
+            doc["MimeType"] = new BsonValue(this.MimeType);
             doc["Length"] = new BsonValue(this.Length);
             doc["UploadDate"] = new BsonValue(this.UploadDate);
             doc["Metadata"] = new BsonObject(this.Metadata);

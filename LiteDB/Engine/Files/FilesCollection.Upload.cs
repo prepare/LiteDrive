@@ -13,9 +13,10 @@ namespace LiteDB
         /// <summary>
         /// Insert or update a file content inside datafile
         /// </summary>
-        public FileEntry Upload(string key, Stream stream, Dictionary<string, string> metadata = null)
+        public FileEntry Upload(string key, string filename, Stream stream, Dictionary<string, string> metadata = null)
         {
             if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("key");
+            if (string.IsNullOrEmpty(filename)) throw new ArgumentNullException("stream");
             if (stream == null) throw new ArgumentNullException("stream");
 
             if(!Regex.IsMatch(key, @"^[^\.<>\\/|:""*][^<>\\/|:""*]*(/[^\.<>\\/|:""*][^<>\\/|:""*]*)*$"))
@@ -32,15 +33,14 @@ namespace LiteDB
             // find document and convert to entry (or create a new one)
             var doc = _col.FindById(key);
 
-
-            var entry = doc == null ? new FileEntry(key, metadata) : new FileEntry(doc);
+            var entry = doc == null ? new FileEntry(key, filename, metadata) : new FileEntry(doc);
 
             // storage do not use cache - read/write pages directly from disk
             // so, transaction is not allowed. 
             // clear cache to garantee that are do not have dirty pages
 
             if (_engine.Transaction.IsInTransaction)
-                throw new LiteDBException("Files can´t be used inside a transaction.");
+                throw new LiteException("Files can´t be used inside a transaction.");
 
             _engine.Transaction.Begin();
 
@@ -82,11 +82,16 @@ namespace LiteDB
             return entry;
         }
 
+        public FileEntry Upload(string key, Stream stream, Dictionary<string, string> metadata = null)
+        {
+            return this.Upload(key, Path.GetFileName(key), stream, metadata);
+        }
+
         public FileEntry Upload(string key, string filename, Dictionary<string, string> metadata = null)
         {
             using (var stream = new FileStream(filename, FileMode.Open, FileAccess.Read))
             {
-                return this.Upload(key, stream, metadata);
+                return this.Upload(key, filename, stream, metadata);
             }
         }
 

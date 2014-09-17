@@ -44,7 +44,6 @@ namespace UnitTest
 
         public decimal Unit { get; set; }
 
-        [BsonIgnore]
         public decimal Total { get { return this.Qtd * this.Unit; } }
     }
 }

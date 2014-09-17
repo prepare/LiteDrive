@@ -34,7 +34,7 @@ namespace LiteDB
         public uint LastPageID { get; set; }
 
         /// <summary>
-        /// Get/Set a user version of data file
+        /// Get/Set a user version of database file
         /// </summary>
         public int UserVersion { get; set; }
 
@@ -54,10 +54,10 @@ namespace LiteDB
             var info = reader.ReadString(BasePage.PAGE_HEADER_SIZE);
 
             if (info != HEADER_INFO)
-                throw new LiteDBException("This file is not a LiteDB datafile");
+                throw new LiteException("This file is not a LiteDB datafile");
 
             if (reader.ReadByte() != FILE_VERSION)
-                throw new LiteDBException("Invalid LiteDB datafile version");
+                throw new LiteException("Invalid LiteDB datafile version");
 
             this.ChangeID = reader.ReadUInt16();
             this.FreeEmptyPageID = reader.ReadUInt32();

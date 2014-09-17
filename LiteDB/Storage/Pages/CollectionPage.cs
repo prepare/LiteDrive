@@ -48,7 +48,7 @@ namespace LiteDB
             {
                 if (this.Indexes[i].IsEmpty) return i;
             }
-            throw new LiteDBException("Collection " + this.CollectionName + " excceded the index limit: " + CollectionIndex.INDEX_PER_COLLECTION);
+            throw new LiteException("Collection " + this.CollectionName + " excceded the index limit: " + CollectionIndex.INDEX_PER_COLLECTION);
         }
 
         public CollectionIndex PK { get { return this.Indexes[0]; } }
