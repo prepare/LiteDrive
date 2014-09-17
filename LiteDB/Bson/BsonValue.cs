@@ -18,7 +18,7 @@ namespace LiteDB
 
         public BsonValue()
         {
-            this.Value = JValue.CreateNull();
+            this.Value = new JObject();
         }
 
         public BsonValue(object value)

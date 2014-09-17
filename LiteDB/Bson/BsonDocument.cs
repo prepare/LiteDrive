@@ -70,9 +70,9 @@ namespace LiteDB
             return this.Value.ToObject<T>();
         }
 
-        public object GetFieldValue(string key)
+        public object GetFieldValue(string field)
         {
-            return this.Value[key].ToObject(typeof(object));
+            return this.Value[field].ToObject(typeof(object));
         }
     }
 }

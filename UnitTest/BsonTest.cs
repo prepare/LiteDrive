@@ -22,15 +22,20 @@ namespace UnitTest
             var d = new BsonDocument();
             d["Name"] = "John Doe";
             d["Phones"] = new BsonArray();
-            d["Phones"].Add(new BsonObject());
+            d["Phones"].AsArray.Add(new BsonObject());
             d["Phones"][0]["Type"] = "Mobile";
             d["Phones"][0]["Number"] = "+55 51 9900-5555";
 
-            var dt = d.ConvertTo<Customer>();
+            var dt = d.To<Customer>();
+            var json = d.ToJson();
+            var bytes = d.ToBson();
+
+            var name = (string)d.GetFieldValue("Name");
 
             Assert.AreEqual(d["Name"].AsString, dt.Name);
+            Assert.AreEqual(d["Name"].AsString, name);
 
-            var d2 = BsonDocument.ConvertFrom(dt);
+            var d2 = new BsonDocument(dt);
 
             Assert.AreEqual(d2["Name"].AsString, dt.Name);
         }

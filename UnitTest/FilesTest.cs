@@ -46,10 +46,10 @@ namespace UnitTest
 
                 Dump.Pages(db, "before");
 
-                var meta = new Dictionary<string, object>();
+                var meta = new Dictionary<string, string>();
                 meta["my-data"] = "Google LiteDB";
 
-                db.Files.Store("my/foto1.jpg", new MemoryStream(new byte[5000]), meta);
+                db.Files.Upload("my/foto1.jpg", new MemoryStream(new byte[5000]), meta);
 
                 Dump.Pages(db ,"after file");
 
@@ -82,7 +82,7 @@ namespace UnitTest
 
                 foreach (var f in files.Take(50))
                 {
-                    db.Files.Store(Path.GetFileName(f), f);
+                    db.Files.Upload(Path.GetFileName(f), f);
                 }
             }
 

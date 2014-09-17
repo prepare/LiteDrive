@@ -150,7 +150,7 @@ Connection string options to initialize LiteEngine class:
 
 ## Dependency
 
-LiteDB has no external dependency, but use [fastBinaryJson](http://fastbinaryjson.codeplex.com/) as Bson converter (included inside LiteDB source).
+LiteDB has [Json.net](http://james.newtonking.com/json) dependency for convert .NET Objects from/to  Json/Bson objects and create documents. Using NuGet, this package will install together.
 
 ## Roadmap
 
@@ -165,4 +165,3 @@ Same features/ideas for future
 - Multikey index: index for array values
 - Full text search
 - Simple admin GUI program
-
