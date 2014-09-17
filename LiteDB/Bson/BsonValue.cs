@@ -16,19 +16,19 @@ namespace LiteDB
     {
         internal JToken Value = null;
 
-        public BsonValue()
+        internal BsonValue()
         {
             this.Value = new JObject();
         }
 
-        public BsonValue(object value)
+        internal BsonValue(object value)
         {
             this.Value = JToken.FromObject(value);
         }
 
         internal BsonValue(JToken value)
         {
-            Value = value;
+            this.Value = value;
         }
 
         public BsonType Type
@@ -50,20 +50,20 @@ namespace LiteDB
             }
         }
 
-        #region "this" operators for BsonObject
+        #region "this" operators for BsonObject/BsonArray
 
         public BsonValue this[string name]
         {
             get
             {
-                if(this.Type != BsonType.Object) throw new LiteDBException("Bson value is not an object");
+                if(this.Type != BsonType.Object) throw new LiteDBException("Value is not an object");
 
                 var obj = (JObject)this.Value;
                 return new BsonValue(obj.GetValue(name));
             }
             set
             {
-                if (this.Type != BsonType.Object) throw new LiteDBException("Bson value is not an object");
+                if (this.Type != BsonType.Object) throw new LiteDBException("Value is not an object");
 
                 var obj = (JObject)this.Value;
                 obj[name] = value.Value;
@@ -74,14 +74,14 @@ namespace LiteDB
         {
             get
             {
-                if(this.Type != BsonType.Array) throw new LiteDBException("Bson value is not an array");
+                if(this.Type != BsonType.Array) throw new LiteDBException("Value is not an array");
 
                 var array = (JArray)this.Value;
                 return new BsonValue(array.ElementAt(index));
             }
             set
             {
-                if(this.Type != BsonType.Array) throw new LiteDBException("Bson value is not an array");
+                if(this.Type != BsonType.Array) throw new LiteDBException("Value is not an array");
 
                 var array = (JArray)Value;
                 array[index] = value.Value;
@@ -103,12 +103,21 @@ namespace LiteDB
 
         public BsonArray AsArray
         {
-            get { return this.Type == BsonType.Array ? new BsonArray((JArray)this.Value) : null; }
+            get 
+            {
+                if (this.Type != BsonType.Array) throw new LiteDBException("Value is not an array");
+                return new BsonArray((JArray)this.Value);
+            }
         }
 
         public BsonObject AsObject
         {
-            get { return this.Type == BsonType.Object ? new BsonObject((JObject)this.Value) : null; }
+            get
+            {
+                if(this.Type != BsonType.Object) throw new LiteDBException("Value is not an object");
+
+                return new BsonObject((JObject)this.Value);
+            }
         }
 
         public string AsString

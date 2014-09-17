@@ -21,7 +21,7 @@ namespace LiteDB
         {
         }
 
-        public BsonObject(object obj)
+        internal BsonObject(object obj)
             : base(JObject.FromObject(obj))
         {
         }

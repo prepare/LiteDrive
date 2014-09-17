@@ -72,7 +72,11 @@ namespace LiteDB
 
         public object GetFieldValue(string field)
         {
-            return this.Value[field].ToObject(typeof(object));
+            var value = this[field];
+
+            if (value.Type == BsonType.Null) return null;
+            
+            return value.Value.ToObject(typeof(object));
         }
     }
 }

@@ -21,12 +21,6 @@ namespace LiteDB
         {
         }
 
-        public void Add(object value)
-        {
-            var array = (JArray)this.Value;
-            array.Add(value);
-        }
-
         public void Add(BsonValue value)
         {
             var array = (JArray)this.Value;
