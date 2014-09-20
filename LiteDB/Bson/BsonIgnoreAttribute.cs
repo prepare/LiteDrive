@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,14 +9,10 @@ using System.Text;
 
 namespace LiteDB
 {
-    public enum BsonType
-    { 
-        Null,
-        Array,
-        Object, 
-        String,
-        Integer,
-        Float,
-        Boolean
+    /// <summary>
+    /// Indicate that property will not be persist in BSON serialization
+    /// </summary>
+    public class BsonIgnoreAttribute : Attribute
+    {
     }
 }

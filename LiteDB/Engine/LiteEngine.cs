@@ -64,15 +64,9 @@ namespace LiteDB
 
         #region Collections
 
-        public Collection<T> GetCollection<T>(string name)
-            where T : new()
+        public Collection GetCollection(string name)
         {
-            return new Collection<T>(this, name);
-        }
-
-        public Collection<BsonDocument> GetCollection(string name)
-        {
-            return new Collection<BsonDocument>(this, name);
+            return new Collection(this, name);
         }
 
         public bool DropCollection(string name)
@@ -113,14 +107,14 @@ namespace LiteDB
 
         #region File Storage
 
-        private FilesCollection _files = null;
+        private Storage _storage = null;
 
         /// <summary>
         /// Returns a special collection for storage files inside datafile
         /// </summary>
-        public FilesCollection Files
+        public Storage Storage
         {
-            get { return _files ?? (_files = new FilesCollection(this)); }
+            get { return _storage ?? (_storage = new Storage(this)); }
         }
 
         #endregion

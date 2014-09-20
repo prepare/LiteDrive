@@ -7,7 +7,7 @@ using System.Text;
 
 namespace LiteDB
 {
-    public partial class Collection<T>
+    public partial class Collection
     {
         /// <summary>
         /// Create a new index if not exists

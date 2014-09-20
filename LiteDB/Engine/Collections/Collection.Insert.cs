@@ -6,18 +6,17 @@ using System.Text;
 
 namespace LiteDB
 {
-    public partial class Collection<T>
+    public partial class Collection
     {
         /// <summary>
         /// Insert a object on collection using a key
         /// </summary>
-        public virtual void Insert(object id, T document)
+        public virtual void Insert(BsonDocument doc)
         {
-            if (id == null) throw new ArgumentNullException("id");
-            if (document == null) throw new ArgumentNullException("document");
+            if (doc == null) throw new ArgumentNullException("doc");
+            if (doc.Id == null) throw new ArgumentNullException("doc.Id");
 
             // serialize object
-            var doc = new BsonDocument(document);
             var bytes = doc.ToBson();
 
             _engine.Transaction.Begin();
@@ -30,7 +29,7 @@ namespace LiteDB
                 var dataBlock = _engine.Data.Insert(col, bytes);
 
                 // store id in a PK index [0 array]
-                var pk = _engine.Indexer.AddNode(col.PK, id);
+                var pk = _engine.Indexer.AddNode(col.PK, doc.Id);
 
                 // do links between index <-> data block
                 pk.DataBlock = dataBlock.Position;

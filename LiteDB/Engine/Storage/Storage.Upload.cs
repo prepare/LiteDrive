@@ -8,12 +8,12 @@ using System.Text.RegularExpressions;
 
 namespace LiteDB
 {
-    public partial class FilesCollection
+    public partial class Storage
     {
         /// <summary>
         /// Insert or update a file content inside datafile
         /// </summary>
-        public FileEntry Upload(string key, string filename, Stream stream, Dictionary<string, string> metadata = null)
+        public FileEntry Upload(string key, string filename, Stream stream, NameValueCollection metadata = null)
         {
             if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("key");
             if (string.IsNullOrEmpty(filename)) throw new ArgumentNullException("stream");
@@ -54,10 +54,9 @@ namespace LiteDB
                     var page = _engine.Data.NextPage(null);
 
                     entry.PageID = page.PageID;
-
                     entry.Length = _engine.Data.StoreStreamData(page, stream);
 
-                    _col.Insert(key, entry.ToBson());
+                    _col.Insert(entry.ToBsonDocument());
                 }
                 else
                 {
@@ -67,7 +66,7 @@ namespace LiteDB
                     entry.UploadDate = DateTime.Now;
                     entry.Metadata = metadata ?? entry.Metadata;
 
-                    _col.Update(key, entry.ToBson());
+                    _col.Update(entry.ToBsonDocument());
                 }
 
                 _engine.Transaction.Commit();
@@ -82,12 +81,12 @@ namespace LiteDB
             return entry;
         }
 
-        public FileEntry Upload(string key, Stream stream, Dictionary<string, string> metadata = null)
+        public FileEntry Upload(string key, Stream stream, NameValueCollection metadata = null)
         {
             return this.Upload(key, Path.GetFileName(key), stream, metadata);
         }
 
-        public FileEntry Upload(string key, string filename, Dictionary<string, string> metadata = null)
+        public FileEntry Upload(string key, string filename, NameValueCollection metadata = null)
         {
             using (var stream = new FileStream(filename, FileMode.Open, FileAccess.Read))
             {
@@ -102,7 +101,7 @@ namespace LiteDB
         {
             if (file == null) throw new ArgumentNullException("file");
 
-            return _col.Update(file.Key, file.ToBson());
+            return _col.Update(file.ToBsonDocument());
         }
     }
 }

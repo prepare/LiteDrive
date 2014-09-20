@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,24 +11,24 @@ namespace LiteDB
     public class BsonArray : BsonValue
     {
         public BsonArray()
-            : base(new JArray())
+            : base(new List<object>())
         {
         }
 
-        internal BsonArray(JArray array)
+        public BsonArray(List<object> array)
             : base(array)
         {
         }
 
         public void Add(BsonValue value)
         {
-            var array = (JArray)this.Value;
-            array.Add(value.Value);
+            var array = (List<object>)this.RawValue;
+            array.Add(value.RawValue);
         }
 
         public void Remove(int index)
         {
-            var array = (JArray)this.Value;
+            var array = (List<object>)this.RawValue;
             array.RemoveAt(index);
         }
 
@@ -37,8 +36,15 @@ namespace LiteDB
         {
             get
             {
-                var array = (JArray)this.Value;
-                return array.Count;
+                return this.RawValue.Count;
+            }
+        }
+
+        public new List<object> RawValue
+        {
+            get
+            {
+                return (List<object>)base.RawValue;
             }
         }
     }

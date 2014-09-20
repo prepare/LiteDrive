@@ -6,12 +6,15 @@ using System.Text;
 
 namespace LiteDB
 {
-    public partial class FilesCollection
+    /// <summary>
+    /// Storage is a special collection to store files/streams.
+    /// </summary>
+    public partial class Storage
     {
-        private Collection<BsonDocument> _col;
+        private Collection _col;
         private LiteEngine _engine;
 
-        internal FilesCollection(LiteEngine engine)
+        internal Storage(LiteEngine engine)
         {
             _engine = engine;
             _col = _engine.GetCollection("_files");

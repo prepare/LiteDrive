@@ -6,25 +6,24 @@ using System.Text;
 
 namespace LiteDB
 {
-    public partial class Collection<T>
+    public partial class Collection
     {
         /// <summary>
         /// Update object in collection
         /// </summary>
-        public virtual bool Update(object id, T document)
+        public virtual bool Update(BsonDocument doc)
         {
-            if (id == null) throw new ArgumentNullException("id");
-            if (document == null) throw new ArgumentNullException("doc");
+            if (doc == null) throw new ArgumentNullException("doc");
+            if (doc.Id == null) throw new ArgumentNullException("doc.Id");
 
             var col = this.GetCollectionPage();
 
             // find indexNode from pk index
-            var indexNode = _engine.Indexer.FindOne(col.PK, id);
+            var indexNode = _engine.Indexer.FindOne(col.PK, doc.Id);
 
             if (indexNode == null) return false;
 
             // serialize object
-            var doc = new BsonDocument(document);
             var bytes = doc.ToBson();
 
             // start transaction - if clear cache, get again collection page

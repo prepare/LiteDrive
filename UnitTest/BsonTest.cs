@@ -25,24 +25,20 @@ namespace UnitTest
             d["Now"] = DateTime.Now;
             d["Num"] = 123;
             d["Money"] = 1.55m;
+            d["List"] = new BsonArray();
+            d["List"].AsArray.Add(123);
+            d["List"].AsArray.Add("abc");
 
-            var dict = new Dictionary<string, string>();
-            dict["first"] = "value";
+            var o = new BsonObject();
+            o["Type"] = "Jogn";
+            o["Go"] = 55.55;
 
-            d["Dict"] = new BsonObject(dict);
+            d["List"].AsArray.Add(o);
 
-            d["Phones"] = new BsonArray();
-            d["Phones"].AsArray.Add(123);
-
-            d["Phones"].AsArray.Add(new BsonObject(new { Type = "Mobile", Number = "+55 51 123" }));
-
-            var dt = d.To<Customer>();
-            var json = d.ToJson();
             var bytes = d.ToBson();
 
             var d2 = new BsonDocument(bytes);
 
-            Assert.AreEqual("value", d2["Dict"].As<Dictionary<string, string>>()["first"]);
 
 
             var name = (string)d.GetFieldValue("Name");
@@ -50,7 +46,6 @@ namespace UnitTest
 
             Assert.AreEqual(name2, null);
 
-            Assert.AreEqual(d["Name"].AsString, dt.Name);
             Assert.AreEqual(d["Name"].AsString, name);
 
         }

@@ -8,7 +8,7 @@ using System.Text;
 namespace LiteDB
 {
     /// <summary>
-    /// Represets a file inside files collection
+    /// Represets a file inside storage collection
     /// </summary>
     public class FileEntry
     {
@@ -17,16 +17,16 @@ namespace LiteDB
         public string MimeType { get; private set; }
         public int Length { get; internal set; }
         public DateTime UploadDate { get; internal set; }
-        public Dictionary<string, string> Metadata { get; internal set; }
+        public NameValueCollection Metadata { get; internal set; }
 
         internal uint PageID { get; set; }
 
-        internal FileEntry(string key, string filename, Dictionary<string, string> metadata)
+        internal FileEntry(string key, string filename, NameValueCollection metadata)
         {
             this.Key = key;
             this.Filename = filename;
             this.MimeType = MimeTypeConverter.GetMimeType(this.Filename);
-            this.Metadata = metadata ?? new Dictionary<string, string>();
+            this.Metadata = metadata ?? new NameValueCollection();
             this.UploadDate = DateTime.Now;
 
             this.PageID = uint.MaxValue;
@@ -34,27 +34,27 @@ namespace LiteDB
 
         internal FileEntry(BsonDocument doc)
         {
-            this.Key = doc["Key"].AsString;
+            this.Key = (string)doc.Id;
             this.Filename = doc["Filename"].AsString;
             this.MimeType = doc["MimeType"].AsString;
             this.Length = doc["Length"].AsInt;
             this.UploadDate = doc["UploadDate"].AsDateTime;
-            this.Metadata = doc["Metadata"].As<Dictionary<string, string>>();
-
-            this.PageID = (uint)doc["PageID"].As<uint>();
+            this.Metadata = new NameValueCollection();
+            this.Metadata.ParseQueryString(doc["Metadata"].AsString);
+            this.PageID = doc["PageID"].AsUInt;
         }
 
-        internal BsonDocument ToBson()
+        internal BsonDocument ToBsonDocument()
         {
             var doc = new BsonDocument();
 
-            doc["Key"] = new BsonValue(this.Key);
-            doc["Filename"] = new BsonValue(this.Filename);
-            doc["MimeType"] = new BsonValue(this.MimeType);
-            doc["Length"] = new BsonValue(this.Length);
-            doc["UploadDate"] = new BsonValue(this.UploadDate);
-            doc["Metadata"] = new BsonObject(this.Metadata);
-            doc["PageID"] = new BsonValue(this.PageID);
+            doc.Id = this.Key;
+            doc["Filename"] = this.Filename;
+            doc["MimeType"] = this.MimeType;
+            doc["Length"] = this.Length;
+            doc["UploadDate"] = this.UploadDate;
+            doc["Metadata"] = this.Metadata.ToString();
+            doc["PageID"] = this.PageID;
 
             return doc;
         }

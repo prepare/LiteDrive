@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace LiteDB
 {
-    public partial class FilesCollection
+    public partial class Storage
     {
         /// <summary>
         /// Delete a file inside datafile and all metadata related

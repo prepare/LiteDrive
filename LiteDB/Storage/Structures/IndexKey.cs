@@ -39,28 +39,31 @@ namespace LiteDB
 
         public readonly IndexDataType Type;
 
+        public readonly bool IsNumber;
+
         public readonly int Length;
 
         public IndexKey(object value)
         {
             this.Value = value;
+            this.IsNumber = false;
 
             // null
             if (value == null) { this.Type = IndexDataType.Null; this.Length = 0; }
 
             // int
-            else if (value is Byte) { this.Type = IndexDataType.Byte; this.Length = 1; }
-            else if (value is Int16) { this.Type = IndexDataType.Int16; this.Length = 2; }
-            else if (value is UInt16) { this.Type = IndexDataType.UInt16; this.Length = 2; }
-            else if (value is Int32) { this.Type = IndexDataType.Int32; this.Length = 4; }
-            else if (value is UInt32) { this.Type = IndexDataType.UInt32; this.Length = 4; }
-            else if (value is Int64) { this.Type = IndexDataType.Int64; this.Length = 8; }
-            else if (value is UInt64) { this.Type = IndexDataType.UInt64; this.Length = 8; }
+            else if (value is Byte) { this.Type = IndexDataType.Byte; this.Length = 1; this.IsNumber = true; }
+            else if (value is Int16) { this.Type = IndexDataType.Int16; this.Length = 2; this.IsNumber = true; }
+            else if (value is UInt16) { this.Type = IndexDataType.UInt16; this.Length = 2; this.IsNumber = true; }
+            else if (value is Int32) { this.Type = IndexDataType.Int32; this.Length = 4; this.IsNumber = true; }
+            else if (value is UInt32) { this.Type = IndexDataType.UInt32; this.Length = 4; this.IsNumber = true; }
+            else if (value is Int64) { this.Type = IndexDataType.Int64; this.Length = 8; this.IsNumber = true; }
+            else if (value is UInt64) { this.Type = IndexDataType.UInt64; this.Length = 8; this.IsNumber = true; }
 
             // decimal
-            else if (value is Single) { this.Type = IndexDataType.Single; this.Length = 4; }
-            else if (value is Double) { this.Type = IndexDataType.Double; this.Length = 8; }
-            else if (value is Decimal) { this.Type = IndexDataType.Decimal; this.Length = 16; }
+            else if (value is Single) { this.Type = IndexDataType.Single; this.Length = 4; this.IsNumber = true; }
+            else if (value is Double) { this.Type = IndexDataType.Double; this.Length = 8; this.IsNumber = true; }
+            else if (value is Decimal) { this.Type = IndexDataType.Decimal; this.Length = 16; this.IsNumber = true; }
 
             // string
             else if (value is String) { this.Type = IndexDataType.String; this.Length = Encoding.UTF8.GetByteCount((string)Value) + 1 /* +1 = For String Length on store */; }
@@ -95,34 +98,46 @@ namespace LiteDB
             if (this.Type == IndexDataType.Null) return -1;
             if (other.Type == IndexDataType.Null) return 1;
 
-            // if types are diferentes, convert to string
-            if (this.Type != other.Type) return string.Compare(Value.ToString(), other.Value.ToString(), StringComparison.InvariantCultureIgnoreCase);
+            // if types are diferentes, convert
+            if (this.Type != other.Type)
+            {
+                // if both values are number, convert them to Double to compare
+                if (this.IsNumber && other.IsNumber)
+                    return Convert.ToDouble(this.Value).CompareTo(Convert.ToDouble(other.Value));
+
+                // if not, convert both to string
+                return string.Compare(Value.ToString(), other.Value.ToString(), StringComparison.InvariantCultureIgnoreCase);
+            }
+
+            // for both values with same datatype just compare
 
             // int
-            if (this.Type == IndexDataType.Byte) return ((Byte)Value).CompareTo(other.Value);
-            if (this.Type == IndexDataType.Int16) return ((Int16)Value).CompareTo(other.Value);
-            if (this.Type == IndexDataType.UInt16) return ((UInt16)Value).CompareTo(other.Value);
-            if (this.Type == IndexDataType.Int32) return ((Int32)Value).CompareTo(other.Value);
-            if (this.Type == IndexDataType.UInt32) return ((UInt32)Value).CompareTo(other.Value);
-            if (this.Type == IndexDataType.Int64) return ((Int64)Value).CompareTo(other.Value);
-            if (this.Type == IndexDataType.UInt64) return ((UInt64)Value).CompareTo(other.Value);
+            if (this.Type == IndexDataType.Byte) return ((Byte)this.Value).CompareTo(other.Value);
+            if (this.Type == IndexDataType.Int16) return ((Int16)this.Value).CompareTo(other.Value);
+            if (this.Type == IndexDataType.UInt16) return ((UInt16)this.Value).CompareTo(other.Value);
+            if (this.Type == IndexDataType.Int32) return ((Int32)this.Value).CompareTo(other.Value);
+            if (this.Type == IndexDataType.UInt32) return ((UInt32)this.Value).CompareTo(other.Value);
+            if (this.Type == IndexDataType.Int64) return ((Int64)this.Value).CompareTo(other.Value);
+            if (this.Type == IndexDataType.UInt64) return ((UInt64)this.Value).CompareTo(other.Value);
+
             // decimal
-            if (this.Type == IndexDataType.Single) return ((Single)Value).CompareTo(other.Value);
-            if (this.Type == IndexDataType.Double) return ((Double)Value).CompareTo(other.Value);
-            if (this.Type == IndexDataType.Decimal) return ((Decimal)Value).CompareTo(other.Value);
+            if (this.Type == IndexDataType.Single) return ((Single)this.Value).CompareTo(other.Value);
+            if (this.Type == IndexDataType.Double) return ((Double)this.Value).CompareTo(other.Value);
+            if (this.Type == IndexDataType.Decimal) return ((Decimal)this.Value).CompareTo(other.Value);
+
             // string
-            if (this.Type == IndexDataType.String) return string.Compare((String)Value, other.Value.ToString(), StringComparison.InvariantCultureIgnoreCase);
+            if (this.Type == IndexDataType.String) return string.Compare((String)this.Value, other.Value.ToString(), StringComparison.InvariantCultureIgnoreCase);
 
             // other
-            if (this.Type == IndexDataType.DateTime) return ((DateTime)Value).CompareTo(other.Value);
-            if (this.Type == IndexDataType.Guid) return ((Guid)Value).CompareTo(other.Value);
+            if (this.Type == IndexDataType.DateTime) return ((DateTime)this.Value).CompareTo(other.Value);
+            if (this.Type == IndexDataType.Guid) return ((Guid)this.Value).CompareTo(other.Value);
 
  	        throw new NotImplementedException();
         }
 
         public override string ToString()
         {
-            return Value == null ? "(null)" : Value.ToString();
+            return this.Value == null ? "(null)" : Value.ToString();
         }
     }
 }

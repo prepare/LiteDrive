@@ -49,11 +49,11 @@ namespace UnitTest
                 var meta = new Dictionary<string, string>();
                 meta["my-data"] = "Google LiteDB";
 
-                db.Files.Upload("my/foto1.jpg", new MemoryStream(new byte[5000]), meta);
+                db.Storage.Upload("my/foto1.jpg", new MemoryStream(new byte[5000]), meta);
 
                 Dump.Pages(db ,"after file");
 
-                var f = db.Files.FindByKey("my/foto1.jpg");
+                var f = db.Storage.FindByKey("my/foto1.jpg");
 
                 Assert.AreEqual(5000, f.Length);
                 Assert.AreEqual("Google LiteDB", f.Metadata["my-data"]);
@@ -68,7 +68,7 @@ namespace UnitTest
                 // all bytes are 0
                 Assert.AreEqual(5000, mem.ToArray().Count(x => x == 0));
 
-                db.Files.Delete("my/foto1.jpg");
+                db.Storage.Delete("my/foto1.jpg");
 
                 Dump.Pages(db, "deleted file");
 
@@ -84,7 +84,7 @@ namespace UnitTest
 
                 foreach (var f in files.Take(50))
                 {
-                    db.Files.Upload(Path.GetFileName(f), f);
+                    db.Storage.Upload(Path.GetFileName(f), f);
                 }
             }
 
@@ -92,19 +92,19 @@ namespace UnitTest
             {
                 Directory.CreateDirectory(@"C:\temp\pictures-50");
 
-                foreach (var f in db.Files.All())
+                foreach (var f in db.Storage.All())
                 {
                     f.SaveAs(db, @"C:\temp\pictures-50\" + f.Key, true);
                 }
 
-                var delete5 = db.Files.All().Take(5);
+                var delete5 = db.Storage.All().Take(5);
 
                 foreach(var f in delete5)
-                    db.Files.Delete(f.Key);
+                    db.Storage.Delete(f.Key);
 
                 Directory.CreateDirectory(@"C:\temp\pictures-45");
 
-                foreach (var f in db.Files.All())
+                foreach (var f in db.Storage.All())
                 {
                     Debug.Print(f.Key);
                     f.SaveAs(db, @"C:\temp\pictures-45\" + f.Key, true);
