@@ -27,6 +27,9 @@ namespace LiteDB
 
             try
             {
+                // create BsonSerializer instance
+                var serializer = new BsonSerializer();
+
                 // get index slot
                 var slot = col.GetFreeIndex();
 
@@ -42,7 +45,7 @@ namespace LiteDB
                     var dataBlock = _engine.Data.Read(node.DataBlock, true);
 
                     // read object
-                    var doc = new BsonDocument(dataBlock.Data);
+                    var doc = serializer.ToDocument(dataBlock.Data);
 
                     // adding index
                     var key = doc.GetFieldValue(field);

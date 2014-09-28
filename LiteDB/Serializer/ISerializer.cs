@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,7 +8,9 @@ using System.Text;
 
 namespace LiteDB
 {
-    public class BsonSerialize
+    interface ISerializer<T>
     {
+        T FromDocument(BsonDocument doc);
+        BsonDocument ToDocument(T data);
     }
 }

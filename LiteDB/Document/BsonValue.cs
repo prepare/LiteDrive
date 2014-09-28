@@ -23,13 +23,13 @@ namespace LiteDB
             this.Type = BsonType.Null;
         }
 
-        public BsonValue(List<object> value)
+        public BsonValue(List<BsonValue> value)
         {
             this.Type = BsonType.Array;
             this.RawValue = value;
         }
 
-        public BsonValue(Dictionary<string, object> value)
+        public BsonValue(Dictionary<string, BsonValue> value)
         {
             this.Type = BsonType.Object;
             this.RawValue = value;
@@ -136,8 +136,8 @@ namespace LiteDB
             this.RawValue = value;
 
             if (value == null) this.Type = BsonType.Null;
-            else if (value is List<object>) this.Type = BsonType.Array;
-            else if (value is Dictionary<string, object>) this.Type = BsonType.Object;
+            else if (value is List<BsonValue>) this.Type = BsonType.Array;
+            else if (value is Dictionary<string, BsonValue>) this.Type = BsonType.Object;
             else if (value is byte) this.Type = BsonType.Byte;
             else if (value is char) this.Type = BsonType.Char;
             else if (value is bool) this.Type = BsonType.Boolean;
@@ -169,7 +169,7 @@ namespace LiteDB
         {
             get
             {
-                return new BsonValue(this.AsObject.RawValue[name]);
+                return this.AsObject.RawValue.Get(name);
             }
             set
             {
@@ -181,11 +181,11 @@ namespace LiteDB
         {
             get
             {
-                return new BsonValue(this.AsArray.RawValue.ElementAt(index));
+                return this.AsArray.RawValue.ElementAt(index);
             }
             set
             {
-                this.AsArray.RawValue[index] = value.RawValue;
+                this.AsArray.RawValue[index] = value;
             }
         }
 
@@ -197,8 +197,8 @@ namespace LiteDB
         {
             get 
             {
-                if (this.Type != BsonType.Array) throw new LiteException("Value is not an array");
-                return new BsonArray((List<object>)this.RawValue);
+                if (!this.IsArray) throw new LiteException("Value is not an array");
+                return new BsonArray((List<BsonValue>)this.RawValue);
             }
         }
 
@@ -206,98 +206,98 @@ namespace LiteDB
         {
             get
             {
-                if(this.Type != BsonType.Object) throw new LiteException("Value is not an object");
-                return new BsonObject((Dictionary<string, object>)this.RawValue);
+                if(!this.IsObject) throw new LiteException("Value is not an object");
+                return new BsonObject((Dictionary<string, BsonValue>)this.RawValue);
             }
         }
 
         public byte AsByte
         {
-            get { return this.Type == BsonType.Byte ? (byte)this.RawValue : (byte)0; }
+            get { return this.Type == BsonType.Byte ? (byte)this.RawValue : default(byte); }
             set { this.Type = BsonType.Byte; this.RawValue = value; }
         }
 
         public char AsChar
         {
-            get { return this.Type == BsonType.Char ? (char)this.RawValue : '\0'; }
+            get { return this.Type == BsonType.Char ? (char)this.RawValue : default(char); }
             set { this.Type = BsonType.Char; this.RawValue = value; }
         }
 
         public bool AsBoolean
         {
-            get { return this.Type == BsonType.Boolean ? (bool)this.RawValue : false; }
+            get { return this.Type == BsonType.Boolean ? (bool)this.RawValue : default(bool); }
             set { this.Type = BsonType.Boolean; this.RawValue = value; }
         }
 
         public string AsString
         {
-            get { return this.Type == BsonType.String ? (string)this.RawValue : null; }
+            get { return this.Type == BsonType.String ? (string)this.RawValue : default(string); }
             set { this.Type = value == null ? BsonType.Null : BsonType.String; this.RawValue = value; }
         }
 
         public short AsShort
         {
-            get { return this.Type == BsonType.Short ? (short)this.RawValue : (short)0; }
+            get { return this.Type == BsonType.Short ? (short)this.RawValue : default(short); }
             set { this.Type = BsonType.Short; this.RawValue = value; }
         }
 
         public int AsInt
         {
-            get { return this.Type == BsonType.Int ? (int)this.RawValue : 0; }
+            get { return this.Type == BsonType.Int ? (int)this.RawValue : default(int); }
             set { this.Type = BsonType.Int; this.RawValue = value; }
         }
 
         public long AsLong
         {
-            get { return this.Type == BsonType.Long ? (long)this.RawValue : 0; }
+            get { return this.Type == BsonType.Long ? (long)this.RawValue : default(long); }
             set { this.Type = BsonType.Long; this.RawValue = value; }
         }
 
         public ushort AsUShort
         {
-            get { return this.Type == BsonType.UShort ? (ushort)this.RawValue : (ushort)0; }
+            get { return this.Type == BsonType.UShort ? (ushort)this.RawValue : default(ushort); }
             set { this.Type = BsonType.UShort; this.RawValue = value; }
         }
 
         public uint AsUInt
         {
-            get { return this.Type == BsonType.UInt ? (uint)this.RawValue : 0; }
+            get { return this.Type == BsonType.UInt ? (uint)this.RawValue : default(uint); }
             set { this.Type = BsonType.UInt; this.RawValue = value; }
         }
 
         public ulong AsULong
         {
-            get { return this.Type == BsonType.ULong ? (ulong)this.RawValue : 0; }
+            get { return this.Type == BsonType.ULong ? (ulong)this.RawValue : default(ulong); }
             set { this.Type = BsonType.ULong; this.RawValue = value; }
         }
 
         public float AsFloat
         {
-            get { return this.Type == BsonType.Float ? (float)this.RawValue : 0; }
+            get { return this.Type == BsonType.Float ? (float)this.RawValue : default(float); }
             set { this.Type = BsonType.Float; this.RawValue = value; }
         }
 
         public double AsDouble
         {
-            get { return this.Type == BsonType.Double ? (double)this.RawValue : 0; }
+            get { return this.Type == BsonType.Double ? (double)this.RawValue : default(double); }
             set { this.Type = BsonType.Double; this.RawValue = value; }
         }
 
         public decimal AsDecimal
         {
-            get { return this.Type == BsonType.Decimal ? (decimal)this.RawValue : 0; }
+            get { return this.Type == BsonType.Decimal ? (decimal)this.RawValue : default(decimal); }
             set { this.Type = BsonType.Decimal; this.RawValue = value; }
         }
 
         public DateTime AsDateTime
         {
-            get { return this.Type == BsonType.DateTime ? (DateTime)this.RawValue : DateTime.MinValue; }
+            get { return this.Type == BsonType.DateTime ? (DateTime)this.RawValue : default(DateTime); }
             set { this.Type = BsonType.DateTime; this.RawValue = value; }
         }
 
         public Guid AsGuid
         {
-            get { return Type == BsonType.Guid ? (Guid)this.RawValue : Guid.Empty; }
+            get { return Type == BsonType.Guid ? (Guid)this.RawValue : default(Guid); }
             set { this.Type = BsonType.Guid; this.RawValue = value; }
         }
 
@@ -472,6 +472,11 @@ namespace LiteDB
         public static implicit operator BsonValue(Guid value)
         {
             return new BsonValue(value);
+        }
+
+        public override string ToString()
+        {
+            return this.IsNull ? "(null)" : this.RawValue.ToString();
         }
 
         #endregion

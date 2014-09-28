@@ -11,25 +11,23 @@ namespace LiteDB
     public class BsonArray : BsonValue
     {
         public BsonArray()
-            : base(new List<object>())
+            : base(new List<BsonValue>())
         {
         }
 
-        public BsonArray(List<object> array)
+        public BsonArray(List<BsonValue> array)
             : base(array)
         {
         }
 
         public void Add(BsonValue value)
         {
-            var array = (List<object>)this.RawValue;
-            array.Add(value.RawValue);
+            this.RawValue.Add(value);
         }
 
         public void Remove(int index)
         {
-            var array = (List<object>)this.RawValue;
-            array.RemoveAt(index);
+            this.RawValue.RemoveAt(index);
         }
 
         public int Length
@@ -40,11 +38,11 @@ namespace LiteDB
             }
         }
 
-        public new List<object> RawValue
+        public new List<BsonValue> RawValue
         {
             get
             {
-                return (List<object>)base.RawValue;
+                return (List<BsonValue>)base.RawValue;
             }
         }
     }

@@ -11,20 +11,20 @@ namespace LiteDB
     public class BsonObject : BsonValue
     {
         public BsonObject()
-            : base(new Dictionary<string, object>())
+            : base(new Dictionary<string, BsonValue>())
         {
         }
 
-        public BsonObject(Dictionary<string, object> obj)
+        public BsonObject(Dictionary<string, BsonValue> obj)
             : base(obj)
         {
         }
 
-        public new Dictionary<string, object> RawValue
+        public new Dictionary<string, BsonValue> RawValue
         {
             get
             {
-                return (Dictionary<string, object>)base.RawValue;
+                return (Dictionary<string, BsonValue>)base.RawValue;
             }
         }
 

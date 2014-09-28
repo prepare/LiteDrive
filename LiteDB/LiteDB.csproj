@@ -41,14 +41,13 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Bson\BsonIgnoreAttribute.cs" />
-    <Compile Include="Bson\BsonSerializer.cs" />
-    <Compile Include="Bson\fastBinaryJSON\BJSON.cs" />
-    <Compile Include="Bson\fastBinaryJSON\BJsonParser.cs" />
-    <Compile Include="Bson\fastBinaryJSON\BJsonSerializer.cs" />
-    <Compile Include="Bson\fastBinaryJSON\Getters.cs" />
-    <Compile Include="Bson\fastBinaryJSON\Reflection.cs" />
-    <Compile Include="Bson\fastBinaryJSON\SafeDictionary.cs" />
+    <Compile Include="Serializer\BsonIgnoreAttribute.cs" />
+    <Compile Include="Serializer\fastBinaryJSON\BJSON.cs" />
+    <Compile Include="Serializer\fastBinaryJSON\BJsonParser.cs" />
+    <Compile Include="Serializer\fastBinaryJSON\BJsonSerializer.cs" />
+    <Compile Include="Serializer\fastBinaryJSON\Getters.cs" />
+    <Compile Include="Serializer\fastBinaryJSON\Reflection.cs" />
+    <Compile Include="Serializer\fastBinaryJSON\SafeDictionary.cs" />
     <Compile Include="Engine\Collections\Collection.cs" />
     <Compile Include="Engine\Collections\Collection.Delete.cs" />
     <Compile Include="Engine\Collections\Collection.Index.cs" />
@@ -63,11 +62,13 @@
     <Compile Include="Engine\Storage\FileEntry.cs" />
     <Compile Include="Engine\Storage\Storage.cs" />
     <Compile Include="Query\Query.cs" />
-    <Compile Include="Bson\BsonValue.cs" />
-    <Compile Include="Bson\BsonType.cs" />
-    <Compile Include="Bson\BsonArray.cs" />
-    <Compile Include="Bson\BsonObject.cs" />
-    <Compile Include="Bson\BsonDocument.cs" />
+    <Compile Include="Document\BsonValue.cs" />
+    <Compile Include="Document\BsonType.cs" />
+    <Compile Include="Document\BsonArray.cs" />
+    <Compile Include="Document\BsonObject.cs" />
+    <Compile Include="Document\BsonDocument.cs" />
+    <Compile Include="Serializer\BsonSerializer.cs" />
+    <Compile Include="Serializer\ISerializer.cs" />
     <Compile Include="Storage\Pages\DataPage.cs" />
     <Compile Include="Storage\Pages\IndexPage.cs" />
     <Compile Include="Storage\Services\CollectionService.cs" />

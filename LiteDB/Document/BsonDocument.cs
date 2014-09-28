@@ -15,13 +15,6 @@ namespace LiteDB
     {
         public const int MAX_DOCUMENT_SIZE = 256 * 1024; // limits in 256 max document size to avoid large documents, memory usage and slow performance
 
-        static BsonDocument()
-        {
-            fastBinaryJSON.BJSON.Parameters.UseExtensions = false;
-            //fastBinaryJSON.BJSON.Parameters.IgnoreAttributes.Clear();
-            //fastBinaryJSON.BJSON.Parameters.IgnoreAttributes.Add(typeof(BsonIgnoreAttribute));
-        }
-
         public object Id 
         {
             get { return this["_id"].RawValue; }
@@ -33,14 +26,16 @@ namespace LiteDB
         {
         }
 
-        public BsonDocument(byte[] data)
-            : base((Dictionary<string, object>)fastBinaryJSON.BJSON.Parse(data))
-        {
-        }
+        //public BsonDocument(byte[] data)
+        //{
+
+        //}
 
         public byte[] ToBson()
         {
-            var bytes = fastBinaryJSON.BJSON.ToBJSON(this.RawValue);
+            var serializer = new BsonSerializer();
+
+            var bytes = serializer.FromDocument(this);
 
             if (bytes.Length > MAX_DOCUMENT_SIZE)
                 throw new LiteException("Document size too long");

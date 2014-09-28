@@ -16,9 +16,10 @@ namespace LiteDB
 
             if (node == null) return null;
 
+            var serializer = new BsonSerializer();
             var dataBlock = _engine.Data.Read(node.DataBlock, true);
 
-            return new BsonDocument(dataBlock.Data);
+            return serializer.ToDocument(dataBlock.Data);
         }
 
         public BsonDocument FindOne(Query query)
@@ -33,13 +34,15 @@ namespace LiteDB
         {
             var col = this.GetCollectionPage();
 
-            var nodes = query.Execute(_engine, col); 
+            var nodes = query.Execute(_engine, col);
+
+            var serializer = new BsonSerializer();
 
             foreach (var node in nodes)
             {
                 var dataBlock = _engine.Data.Read(node.DataBlock, true);
 
-                yield return new BsonDocument(dataBlock.Data);
+                yield return serializer.ToDocument(dataBlock.Data);
             }
         }
 
