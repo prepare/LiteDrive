@@ -11,7 +11,7 @@ namespace UnitTest
     [TestClass]
     public class PageTest
     {
-        private const string dbpath = @"C:\Temp\pages.ldb";
+        private const string dbpath = @"C:\Temp\pages.db";
         private Random rnd;
 
         [TestInitialize]
@@ -29,7 +29,7 @@ namespace UnitTest
             {
                 var k = 1;
 
-                //db.BeginTrans();
+                db.BeginTrans();
 
                 this.PopulateCollection("my_collection_1", db, k);
                 //this.PopulateCollection("my_collection_2", db, k);
@@ -37,16 +37,16 @@ namespace UnitTest
                 //this.PopulateCollection("my_collection_4", db, k);
                 //this.PopulateCollection("my_collection_3", db, 5);
 
-                //db.Commit();
+                db.Commit();
 
-                //this.Verify("my_collection_1", db, k);
+                this.Verify("my_collection_1", db, k);
                 //this.Verify("my_collection_2", db, k);
                 //this.Verify("my_collection_3", db, k);
                 //this.Verify("my_collection_4", db, k);
 
-                //Dump.Pages(db);
+                Dump.Pages(db);
 
-                //db.GetCollection("my_collection_1").Delete(Query.All());
+                db.GetCollection("my_collection_1").Delete(Query.All());
                 //db.GetCollection("my_collection_2").Delete(Query.All());
                 //db.GetCollection("my_collection_3").Delete(Query.All());
                 //db.GetCollection("my_collection_4").Delete(Query.All());
@@ -55,6 +55,7 @@ namespace UnitTest
 
                 db.Storage.Upload("my/foto1.jpg", new MemoryStream(new byte[1024*50]));
             }
+
             using(var db = new LiteEngine(dbpath))
             {
                 Dump.Pages(db, "After File");
@@ -102,7 +103,7 @@ namespace UnitTest
 
                 Assert.AreEqual(50, deleted);
 
-                // balance: 50
+                // balance: 50 (20 with Update = 1, 30 with Update = 2)
             }
 
         }
