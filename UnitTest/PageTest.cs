@@ -73,11 +73,11 @@ namespace UnitTest
                 for (var i = 1; i <= 100; i++)
                 {
                     var doc = new BsonDocument();
-                    doc["Id"] = Guid.NewGuid();
+                    doc.Id = Guid.NewGuid();
                     doc["Today"] = DateTime.Today;
                     doc["Name"] = "John Doe";
                     doc["Updates"] = 0;
-                    col.Insert(doc["Id"].AsGuid, doc);
+                    col.Insert(doc);
                 }
 
                 // change 20 documents do Update = 1
@@ -86,7 +86,7 @@ namespace UnitTest
                     var doc = col.FindOne(Query.EQ("Updates", 0));
                     doc["Name"] = doc["Name"].AsString.PadRight(rnd.Next(10, 500), '-');
                     doc["Updates"] = 1;
-                    col.Update(doc["Id"].AsGuid, doc);
+                    col.Update(doc);
                 }
 
                 // change 30 documents (with Update = 0) to Update = 2
@@ -94,7 +94,7 @@ namespace UnitTest
                 {
                     var doc = col.FindOne(Query.EQ("Updates", 0));
                     doc["Updates"] = 2;
-                    col.Update(doc["Id"].AsGuid, doc);
+                    col.Update(doc);
                 }
 
                 // delete all documents with Update = 0 (50 documents)

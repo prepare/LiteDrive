@@ -11,7 +11,7 @@ namespace LiteDB
     /// </summary>
     public partial class Storage
     {
-        private Collection _col;
+        private Collection<BsonDocument> _col;
         private LiteEngine _engine;
 
         internal Storage(LiteEngine engine)

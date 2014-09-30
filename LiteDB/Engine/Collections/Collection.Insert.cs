@@ -6,18 +6,22 @@ using System.Text;
 
 namespace LiteDB
 {
-    public partial class Collection
+    public partial class Collection<T>
     {
         /// <summary>
         /// Insert a object on collection using a key
         /// </summary>
-        public virtual void Insert(BsonDocument doc)
+        public virtual void Insert(object doc)
         {
             if (doc == null) throw new ArgumentNullException("doc");
-            if (doc.Id == null) throw new ArgumentNullException("doc.Id");
+
+            // gets document Id
+            var id = BsonSerializer.GetIdValue(doc);
+
+            if (id == null) throw new ArgumentNullException("Document Id can't be null");
 
             // serialize object
-            var bytes = doc.ToBson();
+            var bytes = BsonSerializer.Serialize(doc);
 
             _engine.Transaction.Begin();
 
@@ -26,10 +30,10 @@ namespace LiteDB
                 var col = this.GetCollectionPage();
 
                 // storage in data pages - returns dataBlock address
-                var dataBlock = _engine.Data.Insert(col, bytes);
+                var dataBlock = _engine.Data.Insert(col, new IndexKey(id), bytes);
 
                 // store id in a PK index [0 array]
-                var pk = _engine.Indexer.AddNode(col.PK, doc.Id);
+                var pk = _engine.Indexer.AddNode(col.PK, id);
 
                 // do links between index <-> data block
                 pk.DataBlock = dataBlock.Position;
@@ -42,7 +46,7 @@ namespace LiteDB
 
                     if (!index.IsEmpty)
                     {
-                        var key = doc.GetFieldValue(index.Field);
+                        var key = BsonSerializer.GetFieldValue(doc, index.Field);
 
                         var node = _engine.Indexer.AddNode(index, key);
 

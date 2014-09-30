@@ -6,23 +6,22 @@ using System.Text;
 
 namespace LiteDB
 {
-    public partial class Collection
+    public partial class Collection<T>
     {
-        public BsonDocument FindById(object id)
+        public T FindById(object id)
         {
             var col = this.GetCollectionPage();
 
             var node = _engine.Indexer.FindOne(col.PK, id);
 
-            if (node == null) return null;
+            if (node == null) return default(T);
 
-            var serializer = new BsonSerializer();
             var dataBlock = _engine.Data.Read(node.DataBlock, true);
 
-            return serializer.ToDocument(dataBlock.Data);
+            return BsonSerializer.Deserialize<T>(dataBlock.Key, dataBlock.Data);
         }
 
-        public BsonDocument FindOne(Query query)
+        public T FindOne(Query query)
         {
             return this.Find(query).FirstOrDefault();
         }
@@ -30,34 +29,17 @@ namespace LiteDB
         /// <summary>
         /// Find objects inside a collection using a index. Index must exists
         /// </summary>
-        public IEnumerable<BsonDocument> Find(Query query)
+        public IEnumerable<T> Find(Query query)
         {
             var col = this.GetCollectionPage();
 
             var nodes = query.Execute(_engine, col);
-
-            var serializer = new BsonSerializer();
 
             foreach (var node in nodes)
             {
                 var dataBlock = _engine.Data.Read(node.DataBlock, true);
 
-                yield return serializer.ToDocument(dataBlock.Data);
-            }
-        }
-
-        /// <summary>
-        /// Find all object ids in a collection using a index. Index must exists
-        /// </summary>
-        public IEnumerable<object> FindIds(Query query)
-        {
-            var col = this.GetCollectionPage();
-
-            var nodes = query.Execute(_engine, col);
-
-            foreach (var node in nodes)
-            {
-                yield return node.Key.Value;
+                yield return BsonSerializer.Deserialize<T>(dataBlock.Key, dataBlock.Data);
             }
         }
 

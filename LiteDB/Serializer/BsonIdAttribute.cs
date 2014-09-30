@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,9 +9,10 @@ using System.Text;
 
 namespace LiteDB
 {
-    interface ISerializer<T>
+    /// <summary>
+    /// Indicate that property will not be persist in BSON serialization
+    /// </summary>
+    public class BsonIdAttribute : Attribute
     {
-        T FromDocument(BsonDocument doc);
-        BsonDocument ToDocument(T data);
     }
 }

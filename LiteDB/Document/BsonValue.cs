@@ -23,13 +23,13 @@ namespace LiteDB
             this.Type = BsonType.Null;
         }
 
-        public BsonValue(List<BsonValue> value)
+        public BsonValue(List<object> value)
         {
             this.Type = BsonType.Array;
             this.RawValue = value;
         }
 
-        public BsonValue(Dictionary<string, BsonValue> value)
+        public BsonValue(Dictionary<string, object> value)
         {
             this.Type = BsonType.Object;
             this.RawValue = value;
@@ -136,8 +136,8 @@ namespace LiteDB
             this.RawValue = value;
 
             if (value == null) this.Type = BsonType.Null;
-            else if (value is List<BsonValue>) this.Type = BsonType.Array;
-            else if (value is Dictionary<string, BsonValue>) this.Type = BsonType.Object;
+            else if (value is List<object>) this.Type = BsonType.Array;
+            else if (value is Dictionary<string, object>) this.Type = BsonType.Object;
             else if (value is byte) this.Type = BsonType.Byte;
             else if (value is char) this.Type = BsonType.Char;
             else if (value is bool) this.Type = BsonType.Boolean;
@@ -169,11 +169,11 @@ namespace LiteDB
         {
             get
             {
-                return this.AsObject.RawValue.Get(name);
+                return new BsonValue(this.AsObject.RawValue.Get(name));
             }
             set
             {
-                this.AsObject.RawValue[name] = value;
+                this.AsObject.RawValue[name] = value.RawValue;
             }
         }
 
@@ -181,11 +181,11 @@ namespace LiteDB
         {
             get
             {
-                return this.AsArray.RawValue.ElementAt(index);
+                return new BsonValue(this.AsArray.RawValue.ElementAt(index));
             }
             set
             {
-                this.AsArray.RawValue[index] = value;
+                this.AsArray.RawValue[index] = value.RawValue;
             }
         }
 
@@ -198,7 +198,7 @@ namespace LiteDB
             get 
             {
                 if (!this.IsArray) throw new LiteException("Value is not an array");
-                return new BsonArray((List<BsonValue>)this.RawValue);
+                return new BsonArray((List<object>)this.RawValue);
             }
         }
 
@@ -207,7 +207,7 @@ namespace LiteDB
             get
             {
                 if(!this.IsObject) throw new LiteException("Value is not an object");
-                return new BsonObject((Dictionary<string, BsonValue>)this.RawValue);
+                return new BsonObject((Dictionary<string, object>)this.RawValue);
             }
         }
 

@@ -64,9 +64,15 @@ namespace LiteDB
 
         #region Collections
 
-        public Collection GetCollection(string name)
+        public Collection<T> GetCollection<T>(string name)
+            where T : new()
         {
-            return new Collection(this, name);
+            return new Collection<T>(this, name);
+        }
+
+        public Collection<BsonDocument> GetCollection(string name)
+        {
+            return new Collection<BsonDocument>(this, name);
         }
 
         public bool DropCollection(string name)

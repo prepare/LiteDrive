@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Serializer\BsonIgnoreAttribute.cs" />
+    <Compile Include="Serializer\BsonIdAttribute.cs" />
     <Compile Include="Serializer\fastBinaryJSON\BJSON.cs" />
     <Compile Include="Serializer\fastBinaryJSON\BJsonParser.cs" />
     <Compile Include="Serializer\fastBinaryJSON\BJsonSerializer.cs" />
@@ -68,7 +69,6 @@
     <Compile Include="Document\BsonObject.cs" />
     <Compile Include="Document\BsonDocument.cs" />
     <Compile Include="Serializer\BsonSerializer.cs" />
-    <Compile Include="Serializer\ISerializer.cs" />
     <Compile Include="Storage\Pages\DataPage.cs" />
     <Compile Include="Storage\Pages\IndexPage.cs" />
     <Compile Include="Storage\Services\CollectionService.cs" />

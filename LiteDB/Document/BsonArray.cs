@@ -11,18 +11,18 @@ namespace LiteDB
     public class BsonArray : BsonValue
     {
         public BsonArray()
-            : base(new List<BsonValue>())
+            : base(new List<object>())
         {
         }
 
-        public BsonArray(List<BsonValue> array)
+        public BsonArray(List<object> array)
             : base(array)
         {
         }
 
         public void Add(BsonValue value)
         {
-            this.RawValue.Add(value);
+            this.RawValue.Add(value.RawValue);
         }
 
         public void Remove(int index)
@@ -38,11 +38,11 @@ namespace LiteDB
             }
         }
 
-        public new List<BsonValue> RawValue
+        public new List<object> RawValue
         {
             get
             {
-                return (List<BsonValue>)base.RawValue;
+                return (List<object>)base.RawValue;
             }
         }
     }

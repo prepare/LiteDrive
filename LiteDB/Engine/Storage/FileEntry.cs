@@ -34,7 +34,7 @@ namespace LiteDB
 
         internal FileEntry(BsonDocument doc)
         {
-            this.Key = (string)doc.Id;
+            this.Key = doc.Id.ToString();
             this.Filename = doc["Filename"].AsString;
             this.MimeType = doc["MimeType"].AsString;
             this.Length = doc["Length"].AsInt;

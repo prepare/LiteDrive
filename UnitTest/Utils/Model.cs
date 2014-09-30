@@ -21,7 +21,8 @@ namespace UnitTest
 
     public class Order
     {
-        public int OrderId { get; set; }
+        [BsonId]
+        public int OrderKey { get; set; }
 
         public DateTime Date { get; set; }
 

@@ -22,10 +22,10 @@ namespace LiteDB
         /// <summary>
         /// Insert data inside a datapage. Returns dataPageID that idicates the first page
         /// </summary>
-        public DataBlock Insert(CollectionPage col, byte[] data)
+        public DataBlock Insert(CollectionPage col, IndexKey key, byte[] data)
         {
             // need to extend (data is bigger than 1 page)
-            var extend = (data.Length + DataBlock.DATA_BLOCK_FIXED_SIZE) > BasePage.PAGE_AVAILABLE_BYTES;
+            var extend = (data.Length + key.Length + DataBlock.DATA_BLOCK_FIXED_SIZE) > BasePage.PAGE_AVAILABLE_BYTES;
 
             // if extend, just search for a page with BLOCK_SIZE avaiable
             var dataPage = _pager.GetFreePage<DataPage>(col.FreeDataPageID, extend ? DataBlock.DATA_BLOCK_FIXED_SIZE : data.Length + DataBlock.DATA_BLOCK_FIXED_SIZE);

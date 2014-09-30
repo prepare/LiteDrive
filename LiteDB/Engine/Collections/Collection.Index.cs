@@ -7,7 +7,7 @@ using System.Text;
 
 namespace LiteDB
 {
-    public partial class Collection
+    public partial class Collection<T>
     {
         /// <summary>
         /// Create a new index if not exists
@@ -27,9 +27,6 @@ namespace LiteDB
 
             try
             {
-                // create BsonSerializer instance
-                var serializer = new BsonSerializer();
-
                 // get index slot
                 var slot = col.GetFreeIndex();
 
@@ -45,10 +42,10 @@ namespace LiteDB
                     var dataBlock = _engine.Data.Read(node.DataBlock, true);
 
                     // read object
-                    var doc = serializer.ToDocument(dataBlock.Data);
+                    var doc = BsonSerializer.Deserialize<T>(dataBlock.Key, dataBlock.Data);
 
                     // adding index
-                    var key = doc.GetFieldValue(field);
+                    var key = BsonSerializer.GetFieldValue(doc, field);
 
                     var newNode = _engine.Indexer.AddNode(index, key);
 
