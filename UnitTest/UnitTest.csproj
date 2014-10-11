@@ -53,6 +53,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="FindOrderTest.cs" />
     <Compile Include="DebugTest.cs" />
     <Compile Include="DocumentTest.cs" />
     <Compile Include="PageTest.cs" />

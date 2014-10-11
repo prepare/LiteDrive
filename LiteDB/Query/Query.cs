@@ -22,11 +22,19 @@ namespace LiteDB
         }
 
         /// <summary>
-        /// Returns all objects
+        /// Returns all objects using _id PK
         /// </summary>
         public static Query All()
         {
             return new Query { Field = "_id", Operador = "all" };
+        }
+
+        /// <summary>
+        /// Returns all objects using field index order
+        /// </summary>
+        public static Query All(string field)
+        {
+            return new Query { Field = field, Operador = "all" };
         }
 
         /// <summary>
