@@ -33,7 +33,7 @@ namespace LiteDB
         {
             var col = this.GetCollectionPage();
 
-            var nodes = query.Execute(_engine, col);
+            var nodes = query.Run(_engine, col);
 
             foreach (var node in nodes)
             {
@@ -61,7 +61,7 @@ namespace LiteDB
         {
             var col = this.GetCollectionPage();
 
-            return query.Execute(_engine, col).Count();
+            return query.Run(_engine, col).Count();
         }
 
         /// <summary>
@@ -71,7 +71,7 @@ namespace LiteDB
         {
             var col = this.GetCollectionPage();
 
-            return query.Execute(_engine, col).FirstOrDefault() != null;
+            return query.Run(_engine, col).FirstOrDefault() != null;
         }
     }
 }

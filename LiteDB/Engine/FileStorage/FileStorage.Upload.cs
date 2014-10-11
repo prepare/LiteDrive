@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace LiteDB
 {
-    public partial class Storage
+    public partial class FileStorage
     {
         /// <summary>
         /// Insert or update a file content inside datafile

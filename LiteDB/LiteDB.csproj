@@ -41,6 +41,14 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Query\QueryAndOr.cs" />
+    <Compile Include="Query\QueryIn.cs" />
+    <Compile Include="Query\QueryNot.cs" />
+    <Compile Include="Query\QueryLessGreater.cs" />
+    <Compile Include="Query\QueryBetween.cs" />
+    <Compile Include="Query\QueryEquals.cs" />
+    <Compile Include="Query\QueryStartsWith.cs" />
+    <Compile Include="Query\QueryAll.cs" />
     <Compile Include="Serializer\BsonIgnoreAttribute.cs" />
     <Compile Include="Serializer\BsonIdAttribute.cs" />
     <Compile Include="Serializer\fastBinaryJSON\BJSON.cs" />
@@ -55,13 +63,13 @@
     <Compile Include="Engine\Collections\Collection.Find.cs" />
     <Compile Include="Engine\Collections\Collection.Insert.cs" />
     <Compile Include="Engine\Collections\Collection.Update.cs" />
-    <Compile Include="Engine\Storage\LiteFileStream.cs" />
-    <Compile Include="Engine\Storage\Storage.Find.cs" />
-    <Compile Include="Engine\Storage\Storage.Delete.cs" />
-    <Compile Include="Engine\Storage\Storage.Download.cs" />
-    <Compile Include="Engine\Storage\Storage.Upload.cs" />
-    <Compile Include="Engine\Storage\FileEntry.cs" />
-    <Compile Include="Engine\Storage\Storage.cs" />
+    <Compile Include="Engine\FileStorage\LiteFileStream.cs" />
+    <Compile Include="Engine\FileStorage\FileStorage.Find.cs" />
+    <Compile Include="Engine\FileStorage\FileStorage.Delete.cs" />
+    <Compile Include="Engine\FileStorage\FileStorage.Download.cs" />
+    <Compile Include="Engine\FileStorage\FileStorage.Upload.cs" />
+    <Compile Include="Engine\FileStorage\FileEntry.cs" />
+    <Compile Include="Engine\FileStorage\FileStorage.cs" />
     <Compile Include="Query\Query.cs" />
     <Compile Include="Document\BsonValue.cs" />
     <Compile Include="Document\BsonType.cs" />

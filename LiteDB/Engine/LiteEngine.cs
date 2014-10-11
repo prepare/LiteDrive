@@ -111,16 +111,16 @@ namespace LiteDB
 
         #endregion
 
-        #region File Storage
+        #region Files Storage
 
-        private Storage _storage = null;
+        private FileStorage _files = null;
 
         /// <summary>
         /// Returns a special collection for storage files inside datafile
         /// </summary>
-        public Storage Storage
+        public FileStorage FileStorage
         {
-            get { return _storage ?? (_storage = new Storage(this)); }
+            get { return _files ?? (_files = new FileStorage(this)); }
         }
 
         #endregion

@@ -28,6 +28,15 @@ namespace LiteDB
             }
         }
 
+        /// <summary>
+        /// Add fields in fluent api
+        /// </summary>
+        public BsonObject Add(string key, object value)
+        {
+            this[key] = new BsonValue(value);
+            return this;
+        }
+
         public string[] Keys { get { return this.RawValue.Keys.ToArray(); } }
     }
 }

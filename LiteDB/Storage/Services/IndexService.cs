@@ -289,7 +289,7 @@ namespace LiteDB
         /// <summary>
         /// Find nodes startswith a string
         /// </summary>
-        public IEnumerable<IndexNode> FindStarstWith(CollectionIndex index, string text, StringComparison comparisonType = StringComparison.Ordinal)
+        public IEnumerable<IndexNode> FindStarstWith(CollectionIndex index, string text, StringComparison comparisonType)
         {
             // find first indexNode
             var node = this.FindOne(index, text, true);

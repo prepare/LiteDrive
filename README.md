@@ -8,34 +8,54 @@ Same LiteDB features:
 - Transaction control - ACID
 - Recovery in writing failure (journal mode)
 - Use with POCO class or BsonDocument
-- Store file `Stream` too (like GridFS in MongoDB)
+- Store files and `Stream` too (like GridFS in MongoDB)
 - Single data file storage (like SQLite)
 - Up to 8 indexes per collection
 - Open source and free for everyone - including commercial use
 
+## How install
+
+LiteDB is a serverless database, so there is not install. Just copy LiteDB.dll to your Bin folder and add as Reference.
+If you prefer, you can use NuGet package: `Install-Package LiteDB`
+
 ## How to use
 
-Document are storage in collections. Each collection have many documents with same type. Each document have an Id (like 'Primary Key' on relation databases).
+In LiteDB, document are storage in collections. Each collection have many documents with same type. Each document have an `Id`
+(like 'Primary Key' on relation databases). Id datatype can support any indexed datatype (see below)
 
 ```C#
 // Open data file (or create if not exits)
-using(var db = new LiteEngine(@"C:\Temp\myUserDb.ldb"))
+using(var db = new LiteEngine(@"C:\Temp\MyDataFile.db"))
 {
     // Get a collection (or create, if not exits)
     var customers = db.GetCollection<Customer>("customers");
     
     // Insert new document, using 'int' ID 
-    var cust = customers.Insert(1, new Customer { Name = "John Doe" });
+    var cust = customers.Insert(new Customer { Id = 1, Name = "John Doe" });
     
     // Update a document inside a collection
     cust.Name = "Joana Doe";
     
-    customers.Update(id, cust);
+    customers.Update(cust);
     
     // Delete a document
-    customers.Delete(id);
+    customers.Delete(cust.Id);
 }
 ```
+## Documents
+
+Falar sobre os 2 tipos: Poco/BsonDocument.
+
+### POCO Documents
+
+Falar sobre como identificar o PK
+
+### BsonDocument
+
+Falar sobre o bson
+
+## Indexes
+falar de como indexa. Skiplist, index por colecao, só prop diretas, que tipo de dados sao aceitos. PK = _id_
 
 ## Query
 
@@ -63,15 +83,19 @@ var linq = customers.Find(Query.Between("Salary", 500, 1000))
     .OrderBy(x => x.Name);
 ```
 
-`Query` class supports `All`, `Equals`, `Not`, `GreaterThan`, `LessThan`, `Between`, `In`, `StartsWtih`, `AND` and `OR`. All operations use an index.
+`Query` class supports `All`, `Equals`, `Not`, `GreaterThan`, `LessThan`, `Between`, `In`, `StartsWtih`, `AND` and `OR`.
+All operations need an index to be executed.
 
 ##Transactions
 
-All write operations are created inside a transaction. If you do not use `BeginTrans` and `Commit`, transaction are implicit for each operation.
+All write operations are created inside a transaction. If you do not use `BeginTrans` and `Commit`, transaction are implicit
+for each operation.
 
-For simplicity, LiteDB do not support concurrency transactions. LiteDB locks your datafile to guarantee that 2 users are not changing data at same time.
+For simplicity, LiteDB do not support concurrency transactions. LiteDB locks your datafile to guarantee that 2 users are
+not changing data at same time.
 
-If there is any error during write data file, journaling save a redo log file with database dirty pages, to recovery your datafile when datafile open again. 
+If there is any error during write data file, journaling save a redo log file with database dirty pages, to recovery your
+datafile when datafile open again. 
 
 ```C#
 using(var db = new LiteEngine(dbpath))
@@ -93,7 +117,8 @@ using(var db = new LiteEngine(dbpath))
 
 ## BsonDocument
 
-You can use POCO class (as showed before) or `BsonDocument` to store scheme less documents. Document size limit is 256Kb for each document.
+You can use POCO class (as showed before) or `BsonDocument` to store scheme less documents. Document size limit
+is 256Kb for each document.
 
 ```C#
 using(var db = new LiteEngine(connectionString))
@@ -116,45 +141,52 @@ using(var db = new LiteEngine(connectionString))
 
 ## Storing Files
 
-Sametimes we need store files in database. For this, LiteDB has a special `Files` collection to store files without document size limit (file limit is 2Gb per file).
+Sametimes we need store files in database. For this, LiteDB has a special `Files` collection to store files without
+document size limit (file limit is 2Gb per file). It's works like MongoDB `GridFS`.
 
 ```C#
-// Storing a file stream inside database with metadata related
-db.Files.Store("folder/image.png", stream, metadata);
+// Storing a file stream inside database with NameValueCollection metadata related
+db.Files.Upload("my_key.png", stream, metadata);
 
 // Get file reference using key
-var file = db.Files.FindById("folder/image.png");
+var file = db.Files.FindByKey("my_key.png");
 
 // Find all files using StartsWith
-var files = db.Files.Find("folder/");
+var files = db.Files.Find("my_");
 
 // Get file stream
 var stream = file.OpenRead(db);
+
+// Write file stream in a external stream
+db.Files.Download("my_key.png", stream);
+
 ```
 
 ## Connection String
 
 Connection string options to initialize LiteEngine class:
+
 - **Filename**: Path for datafile. You can use only path as connection string (required)
 - **Timeout**: timeout for wait for unlock datafile (default: 00:01:00)
 - **Journal**: Enabled journal mode - recovery support (default: true)
 - **MaxFileLength**: Max datafile length, in bytes (default: 4TB)
 
-
 ## Where to use?
 
 - Desktop/local applications
 - Small web applications
-- One datafile **per account/user** data store
+- One database **per account/user** data store
 - Few concurrency write users operations
 
 ## Dependency
 
-LiteDB has [Json.NET](http://james.newtonking.com/json) dependency for convert .NET Objects from/to  Json/Bson objects and create documents. Using NuGet, this package will install together.
+LiteDB has no external dependency, but use [fastBinaryJson](http://fastbinaryjson.codeplex.com/) as Bson converter 
+from/to .NET objects. All source are included inside LiteDB source.
 
 ## Roadmap
 
-Currently, LiteDB is in early development version. There are many tests to be done before ready for production. Please, be careful on use.
+Currently, LiteDB is in early development version. There are many tests to be done before ready for production.
+Please, be careful on use.
 
 Same features/ideas for future
 

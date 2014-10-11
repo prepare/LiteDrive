@@ -47,7 +47,7 @@ namespace LiteDB
             var col = this.GetCollectionPage();
 
             // find nodes
-            var nodes = query.Execute(_engine, col);
+            var nodes = query.Run(_engine, col);
 
             // start transaction - if clear cache, get again collection page
             if (_engine.Transaction.Begin())

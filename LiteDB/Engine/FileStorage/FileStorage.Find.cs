@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace LiteDB
 {
-    public partial class Storage
+    public partial class FileStorage
     {
         /// <summary>
         /// Find a file inside datafile and returns FileEntry instance. Returns null if not found
