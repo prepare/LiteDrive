@@ -41,6 +41,12 @@ namespace LiteDB
             this.RawValue = value;
         }
 
+        public BsonValue(byte[] value)
+        {
+            this.Type = BsonType.ByteArray;
+            this.RawValue = value;
+        }
+
         public BsonValue(char value)
         {
             this.Type = BsonType.Char;
@@ -139,6 +145,7 @@ namespace LiteDB
             else if (value is List<object>) this.Type = BsonType.Array;
             else if (value is Dictionary<string, object>) this.Type = BsonType.Object;
             else if (value is byte) this.Type = BsonType.Byte;
+            else if (value is byte[]) this.Type = BsonType.ByteArray;
             else if (value is char) this.Type = BsonType.Char;
             else if (value is bool) this.Type = BsonType.Boolean;
             else if (value is string) this.Type = BsonType.String;
@@ -215,6 +222,12 @@ namespace LiteDB
         {
             get { return this.Type == BsonType.Byte ? (byte)this.RawValue : default(byte); }
             set { this.Type = BsonType.Byte; this.RawValue = value; }
+        }
+
+        public byte[] AsByteArray
+        {
+            get { return this.Type == BsonType.ByteArray ? (byte[])this.RawValue : default(byte[]); }
+            set { this.Type = BsonType.ByteArray; this.RawValue = value; }
         }
 
         public char AsChar
@@ -330,6 +343,16 @@ namespace LiteDB
         }
 
         public static implicit operator BsonValue(byte value)
+        {
+            return new BsonValue(value);
+        }
+
+        public static implicit operator byte[](BsonValue value)
+        {
+            return value.AsByteArray;
+        }
+
+        public static implicit operator BsonValue(byte[] value)
         {
             return new BsonValue(value);
         }

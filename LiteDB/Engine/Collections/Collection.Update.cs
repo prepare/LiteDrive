@@ -9,7 +9,7 @@ namespace LiteDB
     public partial class Collection<T>
     {
         /// <summary>
-        /// Update object in collection
+        /// Update a document in this collection. Returns false if not found document in collection
         /// </summary>
         public virtual bool Update(T doc)
         {

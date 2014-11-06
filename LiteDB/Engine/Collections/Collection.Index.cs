@@ -10,14 +10,18 @@ namespace LiteDB
     public partial class Collection<T>
     {
         /// <summary>
-        /// Create a new index if not exists
+        /// Create a new permanent index in all documents inside this collections if index not exists already.
         /// </summary>
+        /// <param name="field">Document field name (case sensitive)</param>
+        /// <param name="unique">Create a unique values index?</param>
         public virtual void EnsureIndex(string field, bool unique = false)
         {
+            if (string.IsNullOrEmpty(field)) throw new ArgumentNullException("field");
+
             var col = this.GetCollectionPage();
 
             // first, check if index already exists
-            if (col.Indexes.FirstOrDefault(x => x.Field.Equals(field, StringComparison.InvariantCultureIgnoreCase)) != null) return;
+            if (col.Indexes.FirstOrDefault(x => x.Field == field) != null) return;
 
             // start transaction - if clear cache, get again collection page
             if (_engine.Transaction.Begin())

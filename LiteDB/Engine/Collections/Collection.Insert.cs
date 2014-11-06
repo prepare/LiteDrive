@@ -9,9 +9,9 @@ namespace LiteDB
     public partial class Collection<T>
     {
         /// <summary>
-        /// Insert a object on collection using a key
+        /// Insert a new document to this collection. Document Id must be a new value in collection
         /// </summary>
-        public virtual void Insert(object doc)
+        public virtual void Insert(T doc)
         {
             if (doc == null) throw new ArgumentNullException("doc");
 

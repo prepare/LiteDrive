@@ -1,16 +1,16 @@
 # LiteDB - A .NET NoSQL Document Store in a single data file
 
-Same LiteDB features:
+LiteDB is a small, fast and lightweight NoSQL embedded database. 
 
 - Serverless NoSQL Document Store
 - Simple API similar to MongoDB
 - 100% C# code for .NET 3.5 in a single DLL - install from NuGet: `Install-Package LiteDB`
 - Transaction control - ACID
 - Recovery in writing failure (journal mode)
-- Use with POCO class or BsonDocument
+- Store POCO classes or BsonDocument
 - Store files and stream data (like GridFS in MongoDB)
 - Single data file storage (like SQLite)
-- Up to 8 indexes per collection
+- Index document fields for fast search (up to 8 indexes per collection)
 - Open source and free for everyone - including commercial use
 
 ## How install
@@ -19,7 +19,7 @@ LiteDB is a serverless database, so there is no install. Just copy LiteDB.dll to
 
 ## How to use
 
-In LiteDB, document are storage in collections. Each collection have many documents with same type. Each document have an `Id` (like 'Primary Key' on relation databases). Id datatype can support any indexed datatype (see below)
+A quick example for store and search documents:
 
 ```C#
 // Open data file (or create if not exits)
@@ -44,49 +44,119 @@ using(var db = new LiteEngine(@"C:\Temp\MyData.db"))
 	var result = col.Find(Query.StartsWith("Jo"));
 }
 ```
+
+## Where to use?
+
+- Desktop/local applications
+- Small web applications
+- One database **per account/user** data store
+- Few concurrency write users operations
+
+## Dependency
+
+LiteDB has no external dependency, but use [fastBinaryJson](http://fastbinaryjson.codeplex.com/) as BSON serializer 
+from/to .NET objects. All source are included inside LiteDB source.
+
+## Roadmap
+
+Currently, LiteDB is in early development version. There are many tests to be done before ready for production. Please, be careful on use.
+
+Same features/ideas for future
+
+- More tests!!
+- A repository pattern
+- DBRef (as in MongoDB)
+- Linq support OR string query engine (see new DocumentDB SQL)
+- Compound index: one index for multiple fields
+- Multikey index: index for array values
+- Full text search
+- Simple admin GUI program
+
+=================================================================================================================
+
+# LiteDB Guide
+
+LiteDB is a NoSQL Database based on a document store: a simple  very simple API similar to MongoDB C# official driver.
+
+- Documents
+- Collections
+
 ## Documents
 
-LiteDB works with documents to store and retrive data inside data file. Your document definition can be a POCO class  or BsonDocument class. In both case, LiteDB will convert your document in a Bson format to store inside disk.
+LiteDB works with documents to store and retrive data inside data file. Your document definition can be a POCO class or BsonDocument class. In both case, LiteDB will convert your document in a BSON format to store inside disk.
 
-Bson is a Binary Json, a serialization for store data objects as binary array. In Bson, we have more data types than Json. LiteDB supports `Null`, `Array`, `Object`, `Byte`, `Char`, `Boolean`, `String`, `Short`, `Int`, `Long`, `UShort`, `UInt`, `ULong`, `Float`, `Double`, `Decimal`, `DateTime`, `Guid`.
+BSON is a Binary JSON, a serialization for store data objects as binary array. In BSON, we have more data types than JSON. LiteDB supports `Null`, `Array`, `Object`, `Byte`, `ByteArray`, `Char`, `Boolean`, `String`, `Short`, `Int`, `Long`, `UShort`, `UInt`, `ULong`, `Float`, `Double`, `Decimal`, `DateTime`, `Guid`.
 
 In LiteDB, documents are limited in 256Kb.
 
 ### Documents using POCO class
 
-POCO class are simple C# classes using only `get/set` properties. It's the best way to create a strong typed documents. Your class must have a `Id` property to LiteDB identify your document. You can use `Id` named property, `<YouClassName>Id` name or decorate a property with `[BsonId]` attribute. Your id key must be non-null value and have a valid indexed data type. See Index section.
+POCO class are simple C# classes using only `get/set` properties. It's the best way to create a strong typed documents. Your class must have a `Id` property to LiteDB identify your document. You can use `Id` named property, `<YouClassName>Id` name or decorate a property with `[BsonId]` attribute. Your `Id` value must be a unique and not null. Also, `Id` data type must be a valid indexed data type. See Index section.
 
 ``` C#
+// A poco entity, must have Id
 public class Customer
 {
 	public Guid Id { get; set; }
 	public string Name { get; set; }
-	public List<string> Phones { get; set; }
+	public List<Phone> Phones { get; set; }
 }
+
+// It's not a entity, don't need Id
+public class Phone
+{
+    public int Code { get; set; }
+    public string Number { get; set; }
+    public PhoneType Type { get; set; }
+}
+
+public enum PhoneType { Mobile, Landline }
 ``` 
+
+- Do not use complex data types (like `DataSet`, `DataTable`)
+- Do not use disposable objects (like `Stream`, `Graphics`)
+- Enums will be converted in strings when serialized
 
 ### Documents using BsonDocument
 
-BsonDocument is a special class that maps any document with a internal `Dictionary<string, object>`. Is very useful to read a unknown document type or use as a generic document
+BsonDocument is a special class that maps any document with a internal `Dictionary<string, object>`. Is very useful to read a unknown document type or use as a generic document.
 
 ```C#
-// Create a BsonDocument and populate
+// Create a BsonDocument for Customer with phones
 var doc = new BsonDocument();
 doc.Id = Guid.NewGuid();
 doc["Name"] = "John Doe";
 doc["Phones"] = new BsonArray();
-doc["Phones"].Add("55(51)9900-0000");    
+doc["Phones"].Add(new BsonObject());
+doc["Phones"][0]["Code"] = 55;
+doc["Phones"][0]["Number"] = "(51) 8000-1234";
+doc["Phones"][0]["Type"] = "Mobile";
 ```
 
-With BsonDocument you can create any complex document. You can use a fluent api too.
+With BsonDocument you can create any complex document schema.
+
+## Collections - the store
+
+LiteDB organize documents in stores (called in LiteDB as collections). Each collection has a unique name and contains documents with same schema/type. You can get a strong typed collection or a generic BsonDocument collections, using `GetCollection` from `LiteEngine` instance.
 
 ```C#
-var doc = new BsonDocument()
-	.Add("Name", "John")
-	.Add("Age", 37);
+var db = new LiteEngine(stringConnection);
+
+// Get a strong typed collection
+var customers = db.GetCollection<Customer>("Customers");
+
+// Get a BsonDocument collection 
+var customers = db.GetCollection("Customers");
 ```
 
+Collections contains all 
+
+== nextval
+
 ## Indexes
+
+LiteDB use indexes to store 
+
 falar de como indexa. Skiplist, index por colecao, só prop diretas, que tipo de dados sao aceitos. PK = _id_
 
 ## Query
@@ -115,25 +185,31 @@ var linq = customers.Find(Query.Between("Salary", 500, 1000))
     .OrderBy(x => x.Name);
 ```
 
-`Query` class supports `All`, `Equals`, `Not`, `GreaterThan`, `LessThan`, `Between`, `In`, `StartsWtih`, `AND` and `OR`.
+`Query` class supports `All`, `Equals`, `Not`, `GreaterThan`, `LessThan`, `Between`, `In`, `StartsWtih` and `OR`.
 All operations need an index to be executed.
 
-##Transactions
+## Transactions
 
-All write operations are created inside a transaction. If you do not use `BeginTrans` and `Commit`, transaction are implicit for each operation.
+== se um erro acontecer durante uma operacao de write, um rollback vai rodar automaticamente
+== nested transaction
 
-For simplicity, LiteDB do not support concurrency transactions. LiteDB locks your datafile to guarantee that 2 users are not changing data at same time.
+LiteDB is atomic in transaction level. All write operations are executed inside a transaction. If you do not use `BeginTrans` and `Commit` methods, transaction are implicit for each operation.
 
-If there is any error during write data file, journaling save a redo log file with database dirty pages, to recovery your datafile when datafile open again. 
+For simplicity, LiteDB do not support concurrency transactions. LiteDB locks your datafile to guarantee that 2 users are not changing data at same time. So, do not use big transactions operations or keep a open transaction without commit or rollback.
+
+### Fail tolerance - recovery mode
+
+After commit method called, LiteDB store all dirty pages to disk. This operations is a fail torelance. Before write direct to disk, LiteDB create a temp file (called redo log) to store all dirty pages. If there is any error during write data file, journaling save a redo log file with database dirty pages, to recovery your datafile when datafile open again. 
 
 ```C#
 using(var db = new LiteEngine(dbpath))
 {
     db.BeginTrans();
     
-    // do many write operations (insert, updates, deletes)...
+    // Do many write operations (insert, updates, deletes),
+    //   but if throw any error during this operations, a Rollback() will be called automatic
     
-    db.Commit(); // Persist dirty pages to disk (use journal redo log file)
+    db.Commit();
 }
 ```
 
@@ -173,29 +249,3 @@ Connection string options to initialize LiteEngine class:
 - **Journal**: Enabled journal mode - recovery support (default: true)
 - **MaxFileLength**: Max datafile length, in bytes (default: 4TB)
 
-## Where to use?
-
-- Desktop/local applications
-- Small web applications
-- One database **per account/user** data store
-- Few concurrency write users operations
-
-## Dependency
-
-LiteDB has no external dependency, but use [fastBinaryJson](http://fastbinaryjson.codeplex.com/) as Bson converter 
-from/to .NET objects. All source are included inside LiteDB source.
-
-## Roadmap
-
-Currently, LiteDB is in early development version. There are many tests to be done before ready for production. Please, be careful on use.
-
-Same features/ideas for future
-
-- More tests!!
-- A repository pattern
-- DBRef (as in MongoDB)
-- Linq support OR string query engine
-- Compound index: one index for multiple fields
-- Multikey index: index for array values
-- Full text search
-- Simple admin GUI program

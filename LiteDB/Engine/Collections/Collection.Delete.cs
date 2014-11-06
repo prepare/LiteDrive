@@ -9,7 +9,7 @@ namespace LiteDB
     public partial class Collection<T>
     {
         /// <summary>
-        /// Delete a item - returns false if not found id
+        /// Delete a document in collection using Document Id - returns false if not found document
         /// </summary>
         public virtual bool Delete(object id)
         {

@@ -7,7 +7,7 @@ using System.Text;
 namespace LiteDB
 {
     /// <summary>
-    /// The LiteDB engine. Used for create a LiteDB instance and use all resoures
+    /// The LiteDB engine. Used for create a LiteDB instance and use all storage resoures. It's the database connection engine.
     /// </summary>
     public partial class LiteEngine : IDisposable
     {
@@ -32,8 +32,9 @@ namespace LiteDB
         internal CollectionService Collections { get; private set; }
 
         /// <summary>
-        /// Constructor - Start all classes services
+        /// Starts LiteDB engine. Open database file or create a new one if not exits
         /// </summary>
+        /// <param name="connectionString">Full filename or connection string</param>
         public LiteEngine(string connectionString)
         {
             this.ConnectionString = new ConnectionString(connectionString);
@@ -64,26 +65,49 @@ namespace LiteDB
 
         #region Collections
 
+        /// <summary>
+        /// Get a collection using a strong typed POCO class. If collection does not exits, create a new one.
+        /// </summary>
+        /// <param name="name">Collection name (case insensitive)</param>
         public Collection<T> GetCollection<T>(string name)
             where T : new()
         {
             return new Collection<T>(this, name);
         }
 
+        /// <summary>
+        /// Get a collection using a generic BsonDocument. If collection does not exits, create a new one.
+        /// </summary>
+        /// <param name="name">Collection name (case insensitive)</param>
         public Collection<BsonDocument> GetCollection(string name)
         {
             return new Collection<BsonDocument>(this, name);
         }
 
+        /// <summary>
+        /// Drop a collection, including all inside documents. Runs outside a transaction - there is no rollback
+        /// </summary>
+        /// <param name="name">Collection name (case insensitive)</param>
         public bool DropCollection(string name)
         {
             return this.Collections.Drop(name);
+        }
+
+        /// <summary>
+        /// Get all collections name inside this database.
+        /// </summary>
+        public string[] GetCollections()
+        {
+            return this.Collections.GetAll().Select(x => x.CollectionName).ToArray();
         }
 
         #endregion
 
         #region UserVersion
 
+        /// <summary>
+        /// Get or set database version. It's used when need store data file version for check old versions before update.
+        /// </summary>
         public int UserVersion
         {
             get { return this.Cache.Header.UserVersion; }
@@ -116,7 +140,7 @@ namespace LiteDB
         private FileStorage _files = null;
 
         /// <summary>
-        /// Returns a special collection for storage files inside datafile
+        /// Returns a special collection for storage files/stream inside datafile
         /// </summary>
         public FileStorage FileStorage
         {
@@ -127,16 +151,26 @@ namespace LiteDB
 
         #region Transaction
 
+        /// <summary>
+        /// Starts a new transaction. After this command, all write operations will be first in memory and will persist on disk
+        /// only when call Commit() method. If any error occurs, a Rollback() method will run.
+        /// </summary>
         public void BeginTrans()
         {
             this.Transaction.Begin();
         }
 
+        /// <summary>
+        /// Persist all changes on disk.
+        /// </summary>
         public void Commit()
         {
             this.Transaction.Commit();
         }
 
+        /// <summary>
+        /// Cancel all write operations and keep datafile as is before BeginTrans() called
+        /// </summary>
         public void Rollback()
         {
             this.Transaction.Rollback();

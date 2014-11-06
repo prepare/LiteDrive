@@ -16,6 +16,7 @@ namespace LiteDB
         Object, 
 
         Byte,
+        ByteArray,
         Char,
         Boolean,
         String,
