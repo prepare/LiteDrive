@@ -50,7 +50,7 @@ namespace LiteDB
 
             this.Cache = new CacheService(this.Disk);
 
-            this.Pager = new PageService(this.Disk, this.Cache, this.ConnectionString);
+            this.Pager = new PageService(this.Disk, this.Cache);
 
             this.Redo = new RedoService(this.Recovery, this.Cache, this.ConnectionString.JournalEnabled);
 
@@ -121,6 +121,42 @@ namespace LiteDB
                     {
                         this.Cache.Header.UserVersion = value;
                         this.Cache.Header.IsDirty = true;
+
+                        this.Transaction.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Transaction.Rollback();
+                        throw ex;
+                    }
+                }
+            }
+        }
+
+        #endregion
+
+        #region MaxFileLength
+
+        /// <summary>
+        /// Get or set database max datafile length. Minumum is 256Kb. Default is long.MaxValue.
+        /// </summary>
+        public long MaxFileLength
+        {
+            get { return this.Cache.Header.MaxFileLength; }
+            set
+            {
+                if (value < (256 * 1024)) throw new ArgumentException("MaxFileLength must be bigger than 262.144 (256Kb)");
+
+                if (this.Cache.Header.MaxFileLength != value)
+                {
+                    this.Transaction.Begin();
+
+                    try
+                    {
+                        this.Cache.Header.MaxFileLength = value;
+                        this.Cache.Header.IsDirty = true;
+
+                        if (this.Cache.Header.MaxPageID > this.Cache.Header.LastPageID) throw new ArgumentException("File size is bigger than " + value);
 
                         this.Transaction.Commit();
                     }
