@@ -6,7 +6,7 @@ using System.Text;
 
 namespace LiteDB
 {
-    internal enum IndexDataType
+    public  enum IndexDataType
     { 
         Null,
         // Int
@@ -31,7 +31,7 @@ namespace LiteDB
     /// <summary>
     /// Represent a index key value - can be a string, int, decimal, guid, ... It's persistable
     /// </summary>
-    internal struct IndexKey : IComparable<IndexKey>
+    public struct IndexKey : IComparable<IndexKey>
     {
         public const int MAX_LENGTH_SIZE = 255;
 

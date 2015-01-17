@@ -13,7 +13,7 @@ namespace LiteDB
     /// This class contains only static method for serialize/deserialize objects
     /// and Get/Set informations on poco objects or BsonDocument
     /// </summary>
-    internal class BsonSerializer
+    public  class BsonSerializer
     {
         static BsonSerializer()
         {
