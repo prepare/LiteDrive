@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Windows.Forms;
 
-
-namespace Test01
+namespace LiteDriveTest
 {
     static class Program
     {
@@ -12,8 +11,7 @@ namespace Test01
         /// </summary>
         [STAThread]
         static void Main()
-        {  
-
+        {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());
