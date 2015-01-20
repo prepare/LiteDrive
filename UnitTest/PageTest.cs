@@ -11,7 +11,7 @@ namespace UnitTest
     [TestClass]
     public class PageTest
     {
-        private const string dbpath = @"C:\Temp\pages.ldb";
+        private const string dbpath = @"C:\Temp\pages.db";
         private Random rnd;
 
         [TestInitialize]
@@ -32,29 +32,30 @@ namespace UnitTest
                 db.BeginTrans();
 
                 this.PopulateCollection("my_collection_1", db, k);
-                this.PopulateCollection("my_collection_2", db, k);
-                this.PopulateCollection("my_collection_3", db, k);
-                this.PopulateCollection("my_collection_4", db, k);
+                //this.PopulateCollection("my_collection_2", db, k);
+                //this.PopulateCollection("my_collection_3", db, k);
+                //this.PopulateCollection("my_collection_4", db, k);
                 //this.PopulateCollection("my_collection_3", db, 5);
 
                 db.Commit();
 
                 this.Verify("my_collection_1", db, k);
-                this.Verify("my_collection_2", db, k);
-                this.Verify("my_collection_3", db, k);
-                this.Verify("my_collection_4", db, k);
+                //this.Verify("my_collection_2", db, k);
+                //this.Verify("my_collection_3", db, k);
+                //this.Verify("my_collection_4", db, k);
 
-                //Dump.Pages(db);
+                Dump.Pages(db);
 
                 db.GetCollection("my_collection_1").Delete(Query.All());
-                db.GetCollection("my_collection_2").Delete(Query.All());
-                db.GetCollection("my_collection_3").Delete(Query.All());
-                db.GetCollection("my_collection_4").Delete(Query.All());
+                //db.GetCollection("my_collection_2").Delete(Query.All());
+                //db.GetCollection("my_collection_3").Delete(Query.All());
+                //db.GetCollection("my_collection_4").Delete(Query.All());
 
                 Dump.Pages(db, "After clear");
 
-                db.Files.Store("my/foto1.jpg", new MemoryStream(new byte[1024*50]));
+                db.FileStorage.Upload("my/foto1.jpg", new MemoryStream(new byte[1024*50]));
             }
+
             using(var db = new LiteEngine(dbpath))
             {
                 Dump.Pages(db, "After File");
@@ -65,36 +66,44 @@ namespace UnitTest
         private void PopulateCollection(string name, LiteEngine db, int k)
         {
             var col = db.GetCollection(name);
-            var doc = new BsonDocument();
-            doc["Name"] = "John Doe";
-            doc["Updates"] = 0;
-
             col.EnsureIndex("Updates");
 
             for (var j = 0; j < k; j++)
             {
+                // create 100 documents with Update = 0
                 for (var i = 1; i <= 100; i++)
                 {
-                    doc["Id"] = Guid.NewGuid();
-                    col.Insert(doc["Id"].AsGuid, doc);
+                    var doc = new BsonDocument();
+                    doc.Id = Guid.NewGuid();
+                    doc["Today"] = DateTime.Today;
+                    doc["Name"] = "John Doe";
+                    doc["Updates"] = 0;
+                    col.Insert(doc);
                 }
+
+                // change 20 documents do Update = 1
                 for (var i = 1; i <= 20; i++)
                 {
-                    var d = col.FindOne(Query.EQ("Updates", 0));
-                    d["Name"] = d["Name"].AsString.PadRight(rnd.Next(10, 500), '-');
-                    d["Updates"] = 1;
-                    col.Update(d["Id"].AsGuid, d);
+                    var doc = col.FindOne(Query.EQ("Updates", 0));
+                    doc["Name"] = doc["Name"].AsString.PadRight(rnd.Next(10, 500), '-');
+                    doc["Updates"] = 1;
+                    col.Update(doc);
                 }
+
+                // change 30 documents (with Update = 0) to Update = 2
                 for (var i = 1; i <= 30; i++)
                 {
-                    var d = col.FindOne(Query.EQ("Updates", 0));
-                    d["Updates"] = 2;
-                    col.Update(d["Id"].AsGuid, d);
+                    var doc = col.FindOne(Query.EQ("Updates", 0));
+                    doc["Updates"] = 2;
+                    col.Update(doc);
                 }
 
-                col.Delete(Query.EQ("Updates", 0)); // delete 50;
+                // delete all documents with Update = 0 (50 documents)
+                var deleted = col.Delete(Query.EQ("Updates", 0));
 
-                // balance: 50
+                Assert.AreEqual(50, deleted);
+
+                // balance: 50 (20 with Update = 1, 30 with Update = 2)
             }
 
         }

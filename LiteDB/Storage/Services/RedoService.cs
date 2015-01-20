@@ -33,7 +33,7 @@ namespace LiteDB
             if (File.Exists(_recovery.RedoFile))
             {
                 disk.UnLock();
-                throw new LiteDBException("Redo file detected. Try reopen data file");
+                throw new LiteException("Redo file detected. Try reopen data file");
             }
         }
 
@@ -42,7 +42,7 @@ namespace LiteDB
             if (!_enabled) return;
 
             if(File.Exists(_recovery.RedoFile))
-                throw new LiteDBException("Redo file detected. Try reopen data file");
+                throw new LiteException("Redo file detected. Try reopen data file");
 
             // first, write all dirty pages, in sequence, in a .redo file
             using (var stream = File.Create(_recovery.RedoFile, BasePage.PAGE_SIZE))

@@ -9,10 +9,17 @@ namespace LiteDB
     public partial class Collection<T>
     {
         /// <summary>
-        /// Update object in collection
+        /// Update a document in this collection. Returns false if not found document in collection
         /// </summary>
-        public virtual bool Update(object id, T value)
+        public virtual bool Update(T doc)
         {
+            if (doc == null) throw new ArgumentNullException("doc");
+
+            // gets document Id
+            var id = BsonSerializer.GetIdValue(doc);
+
+            if (id == null) throw new ArgumentNullException("Document Id can't be null");
+
             var col = this.GetCollectionPage();
 
             // find indexNode from pk index
@@ -21,10 +28,7 @@ namespace LiteDB
             if (indexNode == null) return false;
 
             // serialize object
-            var bytes = BsonSerializer.Serialize(value);
-
-            if (bytes.Length > BsonDocument.MAX_DOCUMENT_SIZE)
-                throw new LiteDBException("Object exceed limit of " + Math.Truncate(BsonDocument.MAX_DOCUMENT_SIZE / 1024m) + " Kb");
+            var bytes = BsonSerializer.Serialize(doc);
 
             // start transaction - if clear cache, get again collection page
             if (_engine.Transaction.Begin())
@@ -44,7 +48,7 @@ namespace LiteDB
 
                     if (!index.IsEmpty)
                     {
-                        var key = BsonSerializer.GetValueField(value, index.Field);
+                        var key = BsonSerializer.GetFieldValue(doc, index.Field);
 
                         var node = _engine.Indexer.GetNode(dataBlock.IndexRef[i]);
 

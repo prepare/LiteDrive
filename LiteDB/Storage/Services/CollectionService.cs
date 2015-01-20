@@ -48,7 +48,7 @@ namespace LiteDB
             }
 
             if (pages.Count() >= CollectionPage.MAX_COLLECTIONS)
-                throw new LiteDBException("This database exceded max collections: " + CollectionPage.MAX_COLLECTIONS);
+                throw new LiteException("This database exceded max collections: " + CollectionPage.MAX_COLLECTIONS);
 
             var col = _pager.NewPage<CollectionPage>(pages.Last());
 

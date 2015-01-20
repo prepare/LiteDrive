@@ -33,6 +33,11 @@ namespace LiteDB
         public byte[] Data { get; set; }
 
         /// <summary>
+        /// Represent Id from document - never changes
+        /// </summary>
+        public IndexKey Key { get; set; }
+
+        /// <summary>
         /// Get a reference for page
         /// </summary>
         public DataPage Page { get; set; }
@@ -42,13 +47,14 @@ namespace LiteDB
         /// </summary>
         public int Length
         {
-            get { return  DataBlock.DATA_BLOCK_FIXED_SIZE + this.Data.Length; }
+            get { return  DataBlock.DATA_BLOCK_FIXED_SIZE + this.Key.Length + this.Data.Length; }
         }
 
         public DataBlock()
         {
             this.Position = PageAddress.Empty;
             this.ExtendPageID = uint.MaxValue;
+            this.Key = new IndexKey(null);
             this.Data = new byte[0];
 
             this.IndexRef = new PageAddress[CollectionIndex.INDEX_PER_COLLECTION];

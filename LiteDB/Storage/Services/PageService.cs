@@ -11,13 +11,11 @@ namespace LiteDB
     {
         private DiskService _disk;
         private CacheService _cache;
-        private ConnectionString _connectionString;
 
-        public PageService(DiskService disk, CacheService cache, ConnectionString connectionString)
+        public PageService(DiskService disk, CacheService cache)
         {
             _disk = disk;
             _cache = cache;
-            _connectionString = connectionString;
         }
 
         /// <summary>
@@ -78,8 +76,8 @@ namespace LiteDB
             {
                 page.PageID = ++_cache.Header.LastPageID;
 
-                if (page.PageID > _connectionString.MaxPageID)
-                    throw new LiteDBException("Max file length excedded");
+                if (page.PageID > _cache.Header.MaxPageID)
+                    throw new LiteException("Max file length excedded");
             }
 
             // if there a page before, just fix NextPageID pointer

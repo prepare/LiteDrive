@@ -9,7 +9,7 @@ namespace LiteDB
     public partial class Collection<T>
     {
         /// <summary>
-        /// Delete a item - returns false if not found id
+        /// Delete a document in collection using Document Id - returns false if not found document
         /// </summary>
         public virtual bool Delete(object id)
         {
@@ -47,7 +47,7 @@ namespace LiteDB
             var col = this.GetCollectionPage();
 
             // find nodes
-            var nodes = query.Execute(_engine, col);
+            var nodes = query.Run(_engine, col);
 
             // start transaction - if clear cache, get again collection page
             if (_engine.Transaction.Begin())

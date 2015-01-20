@@ -9,17 +9,19 @@ namespace LiteDB
     public partial class Collection<T>
     {
         /// <summary>
-        /// Insert a object on collection using a key
+        /// Insert a new document to this collection. Document Id must be a new value in collection
         /// </summary>
-        public virtual void Insert(object id, T value)
+        public virtual void Insert(T doc)
         {
-            if(id == null) throw new ArgumentNullException("id");
+            if (doc == null) throw new ArgumentNullException("doc");
+
+            // gets document Id
+            var id = BsonSerializer.GetIdValue(doc);
+
+            if (id == null) throw new ArgumentNullException("Document Id can't be null");
 
             // serialize object
-            var bytes = BsonSerializer.Serialize(value);
-
-            if (bytes.Length > BsonDocument.MAX_DOCUMENT_SIZE)
-                throw new LiteDBException("Object exceed limit of " + Math.Truncate(BsonDocument.MAX_DOCUMENT_SIZE / 1024m) + " Kb");
+            var bytes = BsonSerializer.Serialize(doc);
 
             _engine.Transaction.Begin();
 
@@ -28,7 +30,7 @@ namespace LiteDB
                 var col = this.GetCollectionPage();
 
                 // storage in data pages - returns dataBlock address
-                var dataBlock = _engine.Data.Insert(col, bytes);
+                var dataBlock = _engine.Data.Insert(col, new IndexKey(id), bytes);
 
                 // store id in a PK index [0 array]
                 var pk = _engine.Indexer.AddNode(col.PK, id);
@@ -44,7 +46,7 @@ namespace LiteDB
 
                     if (!index.IsEmpty)
                     {
-                        var key = BsonSerializer.GetValueField(value, index.Field);
+                        var key = BsonSerializer.GetFieldValue(doc, index.Field);
 
                         var node = _engine.Indexer.AddNode(index, key);
 

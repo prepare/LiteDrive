@@ -8,8 +8,13 @@ namespace LiteDB
 {
     public partial class Collection<T>
     {
+        /// <summary>
+        /// Find a document using Document Id. Returns null if not found.
+        /// </summary>
         public T FindById(object id)
         {
+            if (id == null) throw new ArgumentNullException("id");
+
             var col = this.GetCollectionPage();
 
             var node = _engine.Indexer.FindOne(col.PK, id);
@@ -18,53 +23,39 @@ namespace LiteDB
 
             var dataBlock = _engine.Data.Read(node.DataBlock, true);
 
-            return BsonSerializer.Deserialize<T>(dataBlock.Data);
+            return BsonSerializer.Deserialize<T>(dataBlock.Key, dataBlock.Data);
         }
 
+        /// <summary>
+        /// Find the first document using Query object. Returns null if not found.
+        /// </summary>
         public T FindOne(Query query)
         {
             return this.Find(query).FirstOrDefault();
         }
 
         /// <summary>
-        /// Find objects inside a collection using a index. Index must exists
+        /// Find documents inside a collection using Query object.
         /// </summary>
         public IEnumerable<T> Find(Query query)
         {
+            if (query == null) throw new ArgumentNullException("query");
+
             var col = this.GetCollectionPage();
 
-            var nodes = query.Execute(_engine, col); 
+            var nodes = query.Run(_engine, col);
 
             foreach (var node in nodes)
             {
                 var dataBlock = _engine.Data.Read(node.DataBlock, true);
 
-                var obj = BsonSerializer.Deserialize<T>(dataBlock.Data);
-
-                yield return obj;
+                yield return BsonSerializer.Deserialize<T>(dataBlock.Key, dataBlock.Data);
             }
         }
 
         /// <summary>
-        /// Find all object ids in a collection using a index. Index must exists
+        /// Get document count using property on collection.
         /// </summary>
-        /// <typeparam name="K">Type of Id value</typeparam>
-        public IEnumerable<K> FindIds<K>(Query query)
-        {
-            var col = this.GetCollectionPage();
-
-            var nodes = query.Execute(_engine, col);
-
-            foreach (var node in nodes)
-            {
-                yield return (K)node.Key.Value;
-            }
-        }
-
-        /// <summary>
-        /// Get object count using property on collection.
-        /// </summary>
-        /// <returns></returns>
         public int Count()
         {
             var col = this.GetCollectionPage();
@@ -73,23 +64,27 @@ namespace LiteDB
         }
 
         /// <summary>
-        /// Count objects with a query. Do not read objects
+        /// Count documnets with a query. This method does not deserialize any document.
         /// </summary>
         public int Count(Query query)
         {
+            if (query == null) throw new ArgumentNullException("query");
+
             var col = this.GetCollectionPage();
 
-            return query.Execute(_engine, col).Count();
+            return query.Run(_engine, col).Count();
         }
 
         /// <summary>
-        /// Returns true if query returns any object. Do not read objects
+        /// Returns true if query returns any document. This method does not deserialize any document.
         /// </summary>
         public bool Exists(Query query)
         {
+            if (query == null) throw new ArgumentNullException("query");
+
             var col = this.GetCollectionPage();
 
-            return query.Execute(_engine, col).FirstOrDefault() != null;
+            return query.Run(_engine, col).FirstOrDefault() != null;
         }
     }
 }
