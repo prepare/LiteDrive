@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.Serialization.Formatters.Binary;
+//using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 
 namespace LiteDB
@@ -13,7 +13,7 @@ namespace LiteDB
     /// This class contains only static method for serialize/deserialize objects
     /// and Get/Set informations on poco objects or BsonDocument
     /// </summary>
-    internal class BsonSerializer
+    public  class BsonSerializer
     {
         static BsonSerializer()
         {
