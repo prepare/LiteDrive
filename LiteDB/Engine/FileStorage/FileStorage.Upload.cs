@@ -11,97 +11,58 @@ namespace LiteDB
     public partial class FileStorage
     {
         /// <summary>
-        /// Insert or update a file content inside datafile
+        /// Insert a new file content inside datafile in _files collection
         /// </summary>
-        public FileEntry Upload(string key, string filename, Stream stream, NameValueCollection metadata = null)
+        public FileEntry Upload(FileEntry file, Stream stream)
         {
-            if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("key");
-            if (string.IsNullOrEmpty(filename)) throw new ArgumentNullException("stream");
+            if (file == null) throw new ArgumentNullException("id");
             if (stream == null) throw new ArgumentNullException("stream");
 
-            if(!Regex.IsMatch(key, @"^[^\.<>\\/|:""*][^<>\\/|:""*]*(/[^\.<>\\/|:""*][^<>\\/|:""*]*)*$"))
-                throw new ArgumentException("Invalid key format. Use key as path/to/file/filename.ext");
-
-            // try to find _files collection - if not found, create a new one inside a transaction and commit changes
-            if (_engine.Collections.Get("_files") == null)
-            {
-                _engine.BeginTrans();
-                _engine.Collections.Add("_files");
-                _engine.Commit();
-            }
-
-            // find document and convert to entry (or create a new one)
-            var doc = _col.FindById(key);
-
-            var entry = doc == null ? new FileEntry(key, filename, metadata) : new FileEntry(doc);
-
-            // storage do not use cache - read/write pages directly from disk
-            // so, transaction is not allowed. 
-            // clear cache to garantee that are do not have dirty pages
-
+            // no transaction allowed
             if (_engine.Transaction.IsInTransaction)
                 throw new LiteException("Files can´t be used inside a transaction.");
 
-            _engine.Transaction.Begin();
+            file.UploadDate = DateTime.Now;
 
-            // at this point, all cache pages are the same in disk, so I can use any of them
+            // insert file in _files collections with 0 file length
+            _files.Insert(file.AsDocument);
 
-            try
+            // for each chunk, insert as a chunk document
+            foreach (var chunk in file.CreateChunks(stream))
             {
-                // not found? then insert
-                if (doc == null)
-                {
-                    var page = _engine.Data.NextPage(null);
+                _chunks.Insert(chunk);
 
-                    entry.PageID = page.PageID;
-                    entry.Length = _engine.Data.StoreStreamData(page, stream);
-
-                    _col.Insert(entry.ToBsonDocument());
-                }
-                else
-                {
-                    var page = _engine.Disk.ReadPage<ExtendPage>(entry.PageID);
-
-                    entry.Length = _engine.Data.StoreStreamData(page, stream);
-                    entry.UploadDate = DateTime.Now;
-                    entry.Metadata = metadata ?? entry.Metadata;
-
-                    _col.Update(entry.ToBsonDocument());
-                }
-
-                _engine.Transaction.Commit();
-
-            }
-            catch (Exception ex)
-            {
-                _engine.Transaction.Rollback();
-                throw ex;
+                // clear extend pages in cache to avoid too many use of memory in big files
+                _engine.Cache.RemoveExtendPages();
             }
 
-            return entry;
+            // update fileLength to confirm full file length stored in disk
+            _files.Update(file.AsDocument);
+
+            return file;
         }
 
-        public FileEntry Upload(string key, Stream stream, NameValueCollection metadata = null)
+        public FileEntry Upload(string id, Stream stream)
         {
-            return this.Upload(key, Path.GetFileName(key), stream, metadata);
+            return this.Upload(new FileEntry(id), stream);
         }
 
-        public FileEntry Upload(string key, string filename, NameValueCollection metadata = null)
+        public FileEntry Upload(string id, string filename)
         {
             using (var stream = new FileStream(filename, FileMode.Open, FileAccess.Read))
             {
-                return this.Upload(key, filename, stream, metadata);
+                return this.Upload(new FileEntry(id, filename), stream);
             }
         }
 
         /// <summary>
-        /// Updates a file entry on storage - do not change file content, only metadata will be update
+        /// Update a file entry on storage - do not change file content, only filename/metadata will be update
         /// </summary>
         public bool Update(FileEntry file)
         {
             if (file == null) throw new ArgumentNullException("file");
 
-            return _col.Update(file.ToBsonDocument());
+            return _files.Update(file.AsDocument);
         }
     }
 }

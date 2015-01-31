@@ -31,6 +31,12 @@ namespace LiteDB
         /// </summary>
         public bool JournalEnabled { get; private set; }
 
+        /// <summary>
+        /// Define, in connection string, the user database version. When you increse this value
+        /// LiteEngine will run OnUpdate method for each new version. If defined, must be >= 1. Default: 1
+        /// </summary>
+        public int UserVersion { get; private set; }
+
         public ConnectionString(string connectionString)
         {
             // If is only a name, get connectionString from App.config
@@ -49,16 +55,18 @@ namespace LiteDB
             else
             {
                 // If connectionstring is only a filename, set filename 
-                values["filename"] = connectionString;
+                values["filename"] = Path.GetFullPath(connectionString);
             }
 
             // Read connection string parameters with default value
             this.Timeout = this.GetValue<TimeSpan>(values, "timeout", new TimeSpan(0, 1, 0));
-            this.Filename = this.GetValue<string>(values, "filename", "");
+            this.Filename = Path.GetFullPath(this.GetValue<string>(values, "filename", ""));
             this.JournalEnabled = this.GetValue<bool>(values, "journal", true);
+            this.UserVersion = this.GetValue<int>(values, "version", 1);
 
-            // Validade parameter values
+            // validade parameter values
             if (string.IsNullOrEmpty(Filename)) throw new ArgumentException("Missing FileName in ConnectionString");
+            if (this.UserVersion <= 0) throw new ArgumentException("Connection String version must be greater or equals to 1");
         }
 
         private T GetValue<T>(Dictionary<string, string> values, string key, T defaultValue)

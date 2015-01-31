@@ -4,8 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-//using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace LiteDB
 {
@@ -13,7 +14,7 @@ namespace LiteDB
     /// This class contains only static method for serialize/deserialize objects
     /// and Get/Set informations on poco objects or BsonDocument
     /// </summary>
-    public  class BsonSerializer
+    internal class BsonSerializer
     {
         static BsonSerializer()
         {
@@ -23,6 +24,8 @@ namespace LiteDB
             // BsonId will can be excluded from byte[] data on convert - DataBlock as a special Key data
             fastBinaryJSON.BJSON.Parameters.IgnoreAttributes.Add(typeof(BsonIdAttribute));
             fastBinaryJSON.BJSON.Parameters.IgnoreAttributes.Add(typeof(BsonIgnoreAttribute));
+
+            fastBinaryJSON.BJSON.Parameters.UsingGlobalTypes = false;
         }
 
         public static byte[] Serialize(object obj)
@@ -66,21 +69,47 @@ namespace LiteDB
         /// </summary>
         public static object GetFieldValue(object obj, string fieldName)
         {
+            // supports parent.child.name
+            var names = fieldName.Split('.');
+
             if (obj is BsonDocument)
             {
-                var doc = (BsonDocument)obj;
+                var value = (BsonValue)obj;
 
-                return doc[fieldName].RawValue;
+                if (names.Length == 1)
+                {
+                    return value[fieldName].RawValue;
+                }
+
+                foreach (var name in names)
+                {
+                    if (!value.IsObject) return null;
+                    value = value[name];
+                }
+
+                return value.RawValue;
             }
             else
             {
-                var p = obj.GetType().GetProperty(fieldName);
+                if (names.Length == 1)
+                {
+                    var info = obj.GetType().GetProperty(fieldName);
+                    return info == null ? null : info.GetValue(obj, null);
+                }
 
-                return p == null ? null : p.GetValue(obj, null);
+                foreach (var name in names)
+                {
+                    if (obj == null) return null;
+                    var info = obj.GetType().GetProperty(name);
+                    if (info == null) return null;
+                    obj = info.GetValue(obj, null);
+                }
+
+                return obj;
             }
         }
 
-        private static Dictionary<Type, PropertyInfo> _cache = new Dictionary<Type, PropertyInfo>();
+        private static Dictionary<Type, PropertyInfo> _cacheId = new Dictionary<Type, PropertyInfo>();
 
         /// <summary>
         /// Get Id value from a document object (plain C# object or BsonDocument) 
@@ -110,20 +139,23 @@ namespace LiteDB
         /// <summary>
         /// Gets PropertyInfo that refers to Id from a document object.
         /// </summary>
-        private static PropertyInfo GetIdProperty(Type type)
+        public static PropertyInfo GetIdProperty(Type type)
         {
-            if (_cache.ContainsKey(type))
-                return _cache[type];
+            if (_cacheId.ContainsKey(type))
+                return _cacheId[type];
 
             // Get all properties and test in order: BsonIdAttribute, "Id" name, "<typeName>Id" name
             var prop = SelectProperty(type.GetProperties(),
-                x => Attribute.IsDefined(x, typeof(BsonIdAttribute), true),
-                x => x.Name.Equals("Id", StringComparison.InvariantCultureIgnoreCase),
-                x => x.Name.Equals(type.Name + "Id", StringComparison.InvariantCultureIgnoreCase));
+                x => Attribute.IsDefined(x, typeof(BsonIdAttribute), true));
+                //x => x.Name.Equals("Id", StringComparison.InvariantCultureIgnoreCase),
+                //x => x.Name.Equals(type.Name + "Id", StringComparison.InvariantCultureIgnoreCase));
 
             if (prop != null)
             {
-                _cache[type] = prop;
+                lock (_cacheId)
+                {
+                    _cacheId[type] = prop;
+                }
                 return prop;
             }
 
@@ -147,6 +179,26 @@ namespace LiteDB
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Convert a string to a specific type. Has more convert options from Convert.ChangeType (like Guid)
+        /// </summary>
+        public static object ChangeType(object value, Type type)
+        {
+            if (value == null) return null;
+
+            if (type == typeof(Guid))
+            {
+                var tvalue = value.GetType();
+
+                if (tvalue == typeof(Guid)) return value;
+                if (tvalue == typeof(string)) return new Guid((string)value);
+                if (tvalue == typeof(byte[])) return new Guid((byte[])value);
+                throw new ArgumentException("Guid error convert type");
+            }
+
+            return Convert.ChangeType(value, type);
         }
     }
 }

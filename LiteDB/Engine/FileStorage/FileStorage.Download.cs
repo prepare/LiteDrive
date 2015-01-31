@@ -11,12 +11,12 @@ namespace LiteDB
         /// <summary>
         /// Copy all file content to a steam
         /// </summary>
-        public void Download(string key, Stream stream)
+        public void Download(string id, Stream stream)
         {
-            if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("key");
+            if (string.IsNullOrEmpty(id)) throw new ArgumentNullException("id");
             if (stream == null) throw new ArgumentNullException("stream");
 
-            using (var s = this.OpenRead(key))
+            using (var s = this.OpenRead(id))
             {
                 if (s == null) throw new LiteException("File not found");
 
@@ -25,13 +25,13 @@ namespace LiteDB
         }
 
         /// <summary>
-        /// Load data inside storage and copy to stream
+        /// Load data inside storage and returns as Stream
         /// </summary>
-        public LiteFileStream OpenRead(string key)
+        public LiteFileStream OpenRead(string id)
         {
-            if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("key");
+            if (string.IsNullOrEmpty(id)) throw new ArgumentNullException("id");
 
-            var doc = _col.FindById(key);
+            var doc = _files.FindById(id);
 
             if (doc == null) return null;
 
@@ -39,7 +39,7 @@ namespace LiteDB
         }
 
         /// <summary>
-        /// Load data inside storage and copy to stream
+        /// Load data inside storage and returns as Stream
         /// </summary>
         internal LiteFileStream OpenRead(FileEntry entry)
         {

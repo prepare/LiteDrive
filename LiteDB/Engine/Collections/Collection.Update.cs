@@ -18,26 +18,35 @@ namespace LiteDB
             // gets document Id
             var id = BsonSerializer.GetIdValue(doc);
 
-            if (id == null) throw new ArgumentNullException("Document Id can't be null");
-
-            var col = this.GetCollectionPage();
-
-            // find indexNode from pk index
-            var indexNode = _engine.Indexer.FindOne(col.PK, id);
-
-            if (indexNode == null) return false;
+            if (id == null) throw new LiteException("Document Id can't be null");
 
             // serialize object
             var bytes = BsonSerializer.Serialize(doc);
 
-            // start transaction - if clear cache, get again collection page
-            if (_engine.Transaction.Begin())
-            {
-                col = this.GetCollectionPage();
-            }
+            // start transaction
+            _engine.Transaction.Begin();
 
             try
             {
+                var col = this.GetCollectionPage(false);
+
+                // if no collection, no updates
+                if (col == null)
+                {
+                    _engine.Transaction.Abort();
+                    return false;
+                }
+
+                // find indexNode from pk index
+                var indexNode = _engine.Indexer.FindOne(col.PK, id);
+
+                // if not found document, no updates
+                if (indexNode == null)
+                {
+                    _engine.Transaction.Abort();
+                    return false;
+                }
+
                 // update data storage
                 var dataBlock = _engine.Data.Update(col, indexNode.DataBlock, bytes);
 

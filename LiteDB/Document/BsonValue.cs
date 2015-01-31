@@ -16,6 +16,8 @@ namespace LiteDB
         public BsonType Type { get; private set; }
         public virtual object RawValue { get; private set; }
 
+        public static readonly BsonValue Null = new BsonValue();
+
         #region Constructor
 
         public BsonValue()
@@ -180,7 +182,7 @@ namespace LiteDB
             }
             set
             {
-                this.AsObject.RawValue[name] = value.RawValue;
+                this.AsObject.RawValue[name] = (value == null ? null : value.RawValue);
             }
         }
 
@@ -192,7 +194,7 @@ namespace LiteDB
             }
             set
             {
-                this.AsArray.RawValue[index] = value.RawValue;
+                this.AsArray.RawValue[index] = (value == null ? null : value.RawValue);
             }
         }
 
@@ -244,61 +246,61 @@ namespace LiteDB
 
         public string AsString
         {
-            get { return this.Type == BsonType.String ? (string)this.RawValue : default(string); }
+            get { return this.Type != BsonType.Null ? this.RawValue.ToString() : default(string); }
             set { this.Type = value == null ? BsonType.Null : BsonType.String; this.RawValue = value; }
         }
 
         public short AsShort
         {
-            get { return this.Type == BsonType.Short ? (short)this.RawValue : default(short); }
+            get { return this.IsNumber ? Convert.ToInt16(this.RawValue) : default(short); }
             set { this.Type = BsonType.Short; this.RawValue = value; }
         }
 
         public int AsInt
         {
-            get { return this.Type == BsonType.Int ? (int)this.RawValue : default(int); }
+            get { return this.IsNumber ? Convert.ToInt32(this.RawValue) : default(int); }
             set { this.Type = BsonType.Int; this.RawValue = value; }
         }
 
         public long AsLong
         {
-            get { return this.Type == BsonType.Long ? (long)this.RawValue : default(long); }
+            get { return this.IsNumber ? Convert.ToInt64(this.RawValue) : default(long); }
             set { this.Type = BsonType.Long; this.RawValue = value; }
         }
 
         public ushort AsUShort
         {
-            get { return this.Type == BsonType.UShort ? (ushort)this.RawValue : default(ushort); }
+            get { return this.IsNumber ? Convert.ToUInt16(this.RawValue) : default(ushort); }
             set { this.Type = BsonType.UShort; this.RawValue = value; }
         }
 
         public uint AsUInt
         {
-            get { return this.Type == BsonType.UInt ? (uint)this.RawValue : default(uint); }
+            get { return this.IsNumber ? Convert.ToUInt32(this.RawValue) : default(uint); }
             set { this.Type = BsonType.UInt; this.RawValue = value; }
         }
 
         public ulong AsULong
         {
-            get { return this.Type == BsonType.ULong ? (ulong)this.RawValue : default(ulong); }
+            get { return this.IsNumber ? Convert.ToUInt64(this.RawValue) : default(ulong); }
             set { this.Type = BsonType.ULong; this.RawValue = value; }
         }
 
         public float AsFloat
         {
-            get { return this.Type == BsonType.Float ? (float)this.RawValue : default(float); }
+            get { return this.IsNumber ? Convert.ToSingle(this.RawValue) : default(float); }
             set { this.Type = BsonType.Float; this.RawValue = value; }
         }
 
         public double AsDouble
         {
-            get { return this.Type == BsonType.Double ? (double)this.RawValue : default(double); }
+            get { return this.IsNumber ? Convert.ToDouble(this.RawValue) : default(double); }
             set { this.Type = BsonType.Double; this.RawValue = value; }
         }
 
         public decimal AsDecimal
         {
-            get { return this.Type == BsonType.Decimal ? (decimal)this.RawValue : default(decimal); }
+            get { return this.IsNumber ? Convert.ToDecimal(this.RawValue) : default(decimal); }
             set { this.Type = BsonType.Decimal; this.RawValue = value; }
         }
 
@@ -331,6 +333,23 @@ namespace LiteDB
         public bool IsObject
         {
             get { return this.Type == BsonType.Object; }
+        }
+
+        public bool IsNumber
+        {
+            get
+            {
+                return
+                    this.Type == BsonType.Short ||
+                    this.Type == BsonType.Int ||
+                    this.Type == BsonType.Long ||
+                    this.Type == BsonType.UShort ||
+                    this.Type == BsonType.UInt ||
+                    this.Type == BsonType.ULong ||
+                    this.Type == BsonType.Float ||
+                    this.Type == BsonType.Double ||
+                    this.Type == BsonType.Decimal;
+            }
         }
 
         #endregion

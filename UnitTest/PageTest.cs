@@ -11,21 +11,18 @@ namespace UnitTest
     [TestClass]
     public class PageTest
     {
-        private const string dbpath = @"C:\Temp\pages.db";
         private Random rnd;
 
         [TestInitialize]
         public void Init()
         {
             rnd = new Random(DateTime.Now.Millisecond);
-
-            File.Delete(dbpath);
         }
 
         [TestMethod]
         public void Page_PrevNext_Test()
         {
-            using (var db = new LiteEngine(dbpath))
+            using (var db = new LiteEngine(DB.Path()))
             {
                 var k = 1;
 
@@ -56,7 +53,7 @@ namespace UnitTest
                 db.FileStorage.Upload("my/foto1.jpg", new MemoryStream(new byte[1024*50]));
             }
 
-            using(var db = new LiteEngine(dbpath))
+            using (var db = new LiteEngine(DB.Path(false)))
             {
                 Dump.Pages(db, "After File");
             }
@@ -116,7 +113,6 @@ namespace UnitTest
             Assert.AreEqual(0 * k, col.Count(Query.EQ("Updates", 0)));
             Assert.AreEqual(20 * k, col.Count(Query.EQ("Updates", 1)));
             Assert.AreEqual(30 * k, col.Count(Query.EQ("Updates", 2)));
-
         }
     }
 }

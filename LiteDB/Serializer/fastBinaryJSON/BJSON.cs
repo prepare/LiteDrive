@@ -117,7 +117,15 @@ namespace fastBinaryJSON
         {
             return new BJsonParser(json, Parameters.UseUTCDateTime).Decode();
         }
-
+        ///// <summary>
+        ///// Create a .net4 dynamic object from the binary json byte array
+        ///// </summary>
+        ///// <param name="json"></param>
+        ///// <returns></returns>
+        //public static dynamic ToDynamic(byte[] json)
+        //{
+        //    return new DynamicJson(json);
+        //}
         /// <summary>
         /// Register custom type handlers for your own types not natively handled by fastBinaryJSON
         /// </summary>
@@ -469,7 +477,7 @@ namespace fastBinaryJSON
                 myPropInfo pi;
                 if (props.TryGetValue(name, out pi) == false)
                     continue;
-                if ((pi.Flags & (myPropInfoFlags.Filled | myPropInfoFlags.CanWrite)) != 0) 
+                if (pi.CanWrite)// (pi.Flags & (myPropInfoFlags.Filled | myPropInfoFlags.CanWrite)) != 0) 
                 {
                     object v = d[name];
 
@@ -487,7 +495,7 @@ namespace fastBinaryJSON
                                 oset = CreateDataTable((Dictionary<string, object>)v, globaltypes); 
                                 break;
 #endif                           
-                            case myPropInfoType.Custom :
+                            case myPropInfoType.Custom:
                                 oset = Reflection.Instance.CreateCustom((string)v, pi.pt);
                                 break;
                             case myPropInfoType.Enum:
@@ -509,7 +517,7 @@ namespace fastBinaryJSON
                                 {
                                     if (pi.IsGenericType && pi.IsValueType == false)
                                         oset = CreateGenericList((List<object>)v, pi.pt, pi.bt, globaltypes);
-                                    else if (pi.IsClass && v is Dictionary<string, object>)
+                                    else if ((pi.IsClass || pi.IsStruct) && v is Dictionary<string, object>)
                                         oset = ParseDictionary((Dictionary<string, object>)v, globaltypes, pi.pt, input);
 
                                     else if (v is List<object>)

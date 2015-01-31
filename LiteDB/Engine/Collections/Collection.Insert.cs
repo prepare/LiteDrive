@@ -18,7 +18,7 @@ namespace LiteDB
             // gets document Id
             var id = BsonSerializer.GetIdValue(doc);
 
-            if (id == null) throw new ArgumentNullException("Document Id can't be null");
+            if (id == null) throw new LiteException("Document Id can't be null");
 
             // serialize object
             var bytes = BsonSerializer.Serialize(doc);
@@ -27,7 +27,7 @@ namespace LiteDB
 
             try
             {
-                var col = this.GetCollectionPage();
+                var col = this.GetCollectionPage(true);
 
                 // storage in data pages - returns dataBlock address
                 var dataBlock = _engine.Data.Insert(col, new IndexKey(id), bytes);
@@ -56,6 +56,31 @@ namespace LiteDB
                         // point my dataBlock
                         dataBlock.IndexRef[i] = node.Position;
                     }
+                }
+
+                _engine.Transaction.Commit();
+            }
+            catch (Exception ex)
+            {
+                _engine.Transaction.Rollback();
+                throw ex;
+            }
+        }
+
+        /// <summary>
+        /// Insert an array of new documents to this collection. Document Id must be a new value in collection
+        /// </summary>
+        public virtual void Insert(IEnumerable<T> docs)
+        {
+            if (docs == null) throw new ArgumentNullException("docs");
+
+            try
+            {
+                _engine.Transaction.Begin();
+
+                foreach (var doc in docs)
+                {
+                    this.Insert(doc);
                 }
 
                 _engine.Transaction.Commit();

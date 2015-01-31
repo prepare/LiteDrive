@@ -11,6 +11,8 @@ namespace LiteDB
     /// </summary>
     public partial class LiteEngine : IDisposable
     {
+        #region Properties + Ctor
+
         public ConnectionString ConnectionString { get; private set; }
 
         internal RecoveryService Recovery { get; private set; }
@@ -21,7 +23,7 @@ namespace LiteDB
 
         internal PageService Pager { get; private set; }
 
-        internal RedoService Redo { get; private set; }
+        internal JournalService Journal { get; private set; }
 
         internal TransactionService Transaction { get; private set; }
 
@@ -40,7 +42,9 @@ namespace LiteDB
             this.ConnectionString = new ConnectionString(connectionString);
 
             if (!File.Exists(ConnectionString.Filename))
+            {
                 CreateNewDatabase(ConnectionString);
+            }
 
             this.Recovery = new RecoveryService(this.ConnectionString);
 
@@ -52,16 +56,20 @@ namespace LiteDB
 
             this.Pager = new PageService(this.Disk, this.Cache);
 
-            this.Redo = new RedoService(this.Recovery, this.Cache, this.ConnectionString.JournalEnabled);
+            this.Journal = new JournalService(this.ConnectionString, this.Cache);
 
             this.Indexer = new IndexService(this.Cache, this.Pager);
 
-            this.Transaction = new TransactionService(this.Disk, this.Cache, this.Redo);
+            this.Transaction = new TransactionService(this.Disk, this.Cache, this.Journal);
 
             this.Data = new DataService(this.Disk, this.Cache, this.Pager);
 
             this.Collections = new CollectionService(this.Pager, this.Indexer);
+
+            this.UpdateDatabaseVersion();
         }
+
+        #endregion
 
         #region Collections
 
@@ -85,88 +93,13 @@ namespace LiteDB
         }
 
         /// <summary>
-        /// Drop a collection, including all inside documents. Runs outside a transaction - there is no rollback
-        /// </summary>
-        /// <param name="name">Collection name (case insensitive)</param>
-        public bool DropCollection(string name)
-        {
-            return this.Collections.Drop(name);
-        }
-
-        /// <summary>
         /// Get all collections name inside this database.
         /// </summary>
         public string[] GetCollections()
         {
+            this.Transaction.AvoidDirtyRead();
+
             return this.Collections.GetAll().Select(x => x.CollectionName).ToArray();
-        }
-
-        #endregion
-
-        #region UserVersion
-
-        /// <summary>
-        /// Get or set database version. It's used when need store data file version for check old versions before update.
-        /// </summary>
-        public int UserVersion
-        {
-            get { return this.Cache.Header.UserVersion; }
-            set
-            {
-                if (this.Cache.Header.UserVersion != value)
-                {
-                    this.Transaction.Begin();
-
-                    try
-                    {
-                        this.Cache.Header.UserVersion = value;
-                        this.Cache.Header.IsDirty = true;
-
-                        this.Transaction.Commit();
-                    }
-                    catch (Exception ex)
-                    {
-                        this.Transaction.Rollback();
-                        throw ex;
-                    }
-                }
-            }
-        }
-
-        #endregion
-
-        #region MaxFileLength
-
-        /// <summary>
-        /// Get or set database max datafile length. Minumum is 256Kb. Default is long.MaxValue.
-        /// </summary>
-        public long MaxFileLength
-        {
-            get { return this.Cache.Header.MaxFileLength; }
-            set
-            {
-                if (value < (256 * 1024)) throw new ArgumentException("MaxFileLength must be bigger than 262.144 (256Kb)");
-
-                if (this.Cache.Header.MaxFileLength != value)
-                {
-                    this.Transaction.Begin();
-
-                    try
-                    {
-                        this.Cache.Header.MaxFileLength = value;
-                        this.Cache.Header.IsDirty = true;
-
-                        if (this.Cache.Header.MaxPageID > this.Cache.Header.LastPageID) throw new ArgumentException("File size is bigger than " + value);
-
-                        this.Transaction.Commit();
-                    }
-                    catch (Exception ex)
-                    {
-                        this.Transaction.Rollback();
-                        throw ex;
-                    }
-                }
-            }
         }
 
         #endregion
@@ -197,7 +130,7 @@ namespace LiteDB
         }
 
         /// <summary>
-        /// Persist all changes on disk.
+        /// Persist all changes on disk. Always use this method to finish your changes on database
         /// </summary>
         public void Commit()
         {
@@ -205,7 +138,8 @@ namespace LiteDB
         }
 
         /// <summary>
-        /// Cancel all write operations and keep datafile as is before BeginTrans() called
+        /// Cancel all write operations and keep datafile as is before BeginTrans() called.
+        /// Rollback are implicit on a database operation error, so you do not need call for database errors (only on business rules).
         /// </summary>
         public void Rollback()
         {
@@ -236,7 +170,7 @@ namespace LiteDB
 
         public void Dispose()
         {
-            Disk.Dispose();
+            this.Disk.Dispose();
         }
     }
 }

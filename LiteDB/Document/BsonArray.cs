@@ -8,7 +8,7 @@ using System.Text;
 
 namespace LiteDB
 {
-    public class BsonArray : BsonValue
+    public class BsonArray : BsonValue, IEnumerable<BsonValue>
     {
         public BsonArray()
             : base(new List<object>())
@@ -22,7 +22,7 @@ namespace LiteDB
 
         public void Add(BsonValue value)
         {
-            this.RawValue.Add(value.RawValue);
+            this.RawValue.Add(value == null ? null : value.RawValue);
         }
 
         public void Remove(int index)
@@ -44,6 +44,19 @@ namespace LiteDB
             {
                 return (List<object>)base.RawValue;
             }
+        }
+
+        public IEnumerator<BsonValue> GetEnumerator()
+        {
+            foreach (var value in this.RawValue)
+            {
+                yield return new BsonValue(value);
+            }
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator();
         }
     }
 }

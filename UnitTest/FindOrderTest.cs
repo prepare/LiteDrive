@@ -10,6 +10,7 @@ namespace UnitTest
 {
     public class OrderObj
     {
+        [BsonId]
         public int Id { get; set; }
         public string Text { get; set; }
     }
@@ -17,18 +18,10 @@ namespace UnitTest
     [TestClass]
     public class FindOrderTest
     {
-        private const string dbpath = @"C:\Temp\revert.db";
-
-        [TestInitialize]
-        public void Init()
-        {
-            File.Delete(dbpath);
-        }
-
         [TestMethod]
         public void Find_Order()
         {
-            using (var db = new LiteEngine(dbpath))
+            using (var db = new LiteEngine(DB.Path()))
             {
                 var col = db.GetCollection<OrderObj>("order");
                 col.EnsureIndex("Text");

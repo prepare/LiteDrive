@@ -6,10 +6,11 @@ using System.Text;
 
 namespace LiteDB
 {
-    public  enum IndexDataType
+    internal enum IndexDataType
     { 
         Null,
         // Int
+        Boolean,
         Byte,
         Int16,
         UInt16,
@@ -31,7 +32,7 @@ namespace LiteDB
     /// <summary>
     /// Represent a index key value - can be a string, int, decimal, guid, ... It's persistable
     /// </summary>
-    public struct IndexKey : IComparable<IndexKey>
+    internal struct IndexKey : IComparable<IndexKey>
     {
         public const int MAX_LENGTH_SIZE = 255;
 
@@ -69,6 +70,7 @@ namespace LiteDB
             else if (value is String) { this.Type = IndexDataType.String; this.Length = Encoding.UTF8.GetByteCount((string)Value) + 1 /* +1 = For String Length on store */; }
 
             // Others
+            else if (value is Boolean) { this.Type = IndexDataType.Boolean; this.Length = 1; }
             else if (value is DateTime) { this.Type = IndexDataType.DateTime; this.Length = 8; }
             else if (value is Guid) { this.Type = IndexDataType.Guid; this.Length = 16; }
 
@@ -86,9 +88,11 @@ namespace LiteDB
                 this.Length = 1;
             }
 
-            // limit in 255 string byte
+            // limit in 255 string bytes
             if (this.Type == IndexDataType.String && this.Length > MAX_LENGTH_SIZE)
+            {
                 throw LiteException.IndexKeyTooLong();
+            }
         }
 
         public int CompareTo(IndexKey other)
@@ -102,8 +106,11 @@ namespace LiteDB
             if (this.Type != other.Type)
             {
                 // if both values are number, convert them to Double to compare
+                // using Double because it's faster then Decimal and bigger range
                 if (this.IsNumber && other.IsNumber)
+                {
                     return Convert.ToDouble(this.Value).CompareTo(Convert.ToDouble(other.Value));
+                }
 
                 // if not, convert both to string
                 return string.Compare(Value.ToString(), other.Value.ToString(), StringComparison.InvariantCultureIgnoreCase);
@@ -129,6 +136,7 @@ namespace LiteDB
             if (this.Type == IndexDataType.String) return string.Compare((String)this.Value, other.Value.ToString(), StringComparison.InvariantCultureIgnoreCase);
 
             // other
+            if (this.Type == IndexDataType.Boolean) return ((Boolean)this.Value).CompareTo(other.Value);
             if (this.Type == IndexDataType.DateTime) return ((DateTime)this.Value).CompareTo(other.Value);
             if (this.Type == IndexDataType.Guid) return ((Guid)this.Value).CompareTo(other.Value);
 

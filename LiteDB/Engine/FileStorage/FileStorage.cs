@@ -11,13 +11,15 @@ namespace LiteDB
     /// </summary>
     public partial class FileStorage
     {
-        private Collection<BsonDocument> _col;
+        private Collection<BsonDocument> _files;
+        private Collection<BsonDocument> _chunks;
         private LiteEngine _engine;
 
         internal FileStorage(LiteEngine engine)
         {
             _engine = engine;
-            _col = _engine.GetCollection("_files");
+            _files = _engine.GetCollection("_files");
+            _chunks = _engine.GetCollection("_chunks");
         }
     }
 }

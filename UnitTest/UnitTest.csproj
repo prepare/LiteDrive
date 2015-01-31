@@ -53,6 +53,12 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="StressTest.cs" />
+    <Compile Include="JsonTest.cs" />
+    <Compile Include="LinqTest.cs" />
+    <Compile Include="IncludeTest.cs" />
+    <Compile Include="Utils\DB.cs" />
+    <Compile Include="VersionTest.cs" />
     <Compile Include="FindOrderTest.cs" />
     <Compile Include="DebugTest.cs" />
     <Compile Include="DocumentTest.cs" />
@@ -67,7 +73,6 @@
       <Name>System.Data.JuDB</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

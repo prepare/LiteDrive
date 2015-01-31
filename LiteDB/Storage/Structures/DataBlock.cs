@@ -9,9 +9,9 @@ namespace LiteDB
     internal class DataBlock
     {
         public const int DATA_BLOCK_FIXED_SIZE = 2 + // Position.Index
-                                                (PageAddress.SIZE * CollectionIndex.INDEX_PER_COLLECTION) + // IndexRef pointer
-                                                4; // ExtendedPageID (uint)
-
+                                                 4 + // ExtendedPageID (uint)
+                                                 (PageAddress.SIZE * CollectionIndex.INDEX_PER_COLLECTION) + // IndexRef pointer
+                                                 2; // block.Data.Length (ushort)
         /// <summary>
         /// Position of this dataBlock inside a page (store only Position.Index)
         /// </summary>

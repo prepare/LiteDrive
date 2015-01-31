@@ -13,37 +13,28 @@ namespace LiteDB
         /// <summary>
         /// Delete a file inside datafile and all metadata related
         /// </summary>
-        public bool Delete(string key)
+        public bool Delete(string id)
         {
-            if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("key");
-
-            var doc = _col.FindById(key);
-
-            if (doc == null) return false;
+            if (string.IsNullOrEmpty(id)) throw new ArgumentNullException("id");
 
             if (_engine.Transaction.IsInTransaction)
                 throw new LiteException("Files can't be used inside a transaction.");
 
-            var entry = new FileEntry(doc);
+            // remove file reference in _files
+            var d = _files.Delete(id);
 
-            _engine.Transaction.Begin();
+            // if not found, just return false
+            if(d == false) return false;
 
-            // at this point, pages in cache are equals in disk - I can use anyone
+            var index = 0;
 
-            try
+            while (true)
             {
-                // set all pages to empty directly to disk - except Header ponter and last deleted page (both are will be saved during commit)
-                _engine.Data.DeleteStreamData(entry.PageID);
+                var del = _chunks.Delete(id + "\\" + (index ++));
 
-                // delete FileEntry document
-                _col.Delete(key);
+                _engine.Cache.RemoveExtendPages();
 
-                _engine.Transaction.Commit();
-            }
-            catch (Exception ex)
-            {
-                _engine.Transaction.Rollback();
-                throw ex;
+                if (del == false) break;
             }
 
             return true;

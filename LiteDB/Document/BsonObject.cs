@@ -37,6 +37,25 @@ namespace LiteDB
             return this;
         }
 
+        /// <summary>
+        /// Returns all object keys
+        /// </summary>
         public string[] Keys { get { return this.RawValue.Keys.ToArray(); } }
+
+        /// <summary>
+        /// Check if this object has a specific key
+        /// </summary>
+        public bool HasKey(string key)
+        {
+            return this.RawValue.ContainsKey(key);
+        }
+
+        /// <summary>
+        /// Remove a specific key on object
+        /// </summary>
+        public bool RemoveKey(string key)
+        {
+            return this.RawValue.Remove(key);
+        }
     }
 }

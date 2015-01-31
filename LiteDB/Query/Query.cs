@@ -43,35 +43,35 @@ namespace LiteDB
         }
 
         /// <summary>
-        /// Returns all objects that value are less than value (<)
+        /// Returns all objects that value are less than value (&lt;)
         /// </summary>
         public static Query LT(string field, object value)
         {
-            return new QueryLessGreater(field, value, false, true);
+            return new QueryLess(field, value, false);
         }
 
         /// <summary>
-        /// Returns all objects that value are less than or equals value (<=)
+        /// Returns all objects that value are less than or equals value (&lt;=)
         /// </summary>
         public static Query LTE(string field, object value)
         {
-            return new QueryLessGreater(field, value, true, true);
+            return new QueryLess(field, value, true);
         }
 
         /// <summary>
-        /// Returns all objects that value are greater than value (>)
+        /// Returns all objects that value are greater than value (&gt;)
         /// </summary>
         public static Query GT(string field, object value)
         {
-            return new QueryLessGreater(field, value, false, false);
+            return new QueryGreater(field, value, false);
         }
 
         /// <summary>
-        /// Returns all objects that value are greater than or equals value (>=)
+        /// Returns all objects that value are greater than or equals value (&gt;=)
         /// </summary>
         public static Query GTE(string field, object value)
         {
-            return new QueryLessGreater(field, value, true, false);
+            return new QueryGreater(field, value, true);
         }
 
         /// <summary>
@@ -88,14 +88,6 @@ namespace LiteDB
         public static Query StartsWith(string field, string value)
         {
             return new QueryStartsWith(field, value);
-        }
-
-        /// <summary>
-        /// Returns all objects that starts with value (LIKE)
-        /// </summary>
-        public static Query StartsWith(string field, string value, StringComparison stringComparison)
-        {
-            return new QueryStartsWith(field, value, stringComparison);
         }
 
         /// <summary>
@@ -116,26 +108,27 @@ namespace LiteDB
         /// <summary>
         /// Returns objects that exists in ALL queries results.
         /// </summary>
-        public static Query AND(params Query[] queries)
+        public static Query AND(Query left, Query right)
         {
-            return new QueryAndOr(queries, true);
+            return new QueryAnd(left, right);
         }
 
         /// <summary>
         /// Returns objects that exists in ANY queries results.
         /// </summary>
-        public static Query OR(params Query[] queries)
+        public static Query OR(Query left, Query right)
         {
-            return new QueryAndOr(queries, false);
+            return new QueryOr(left, right);
         }
 
         #region Execute Query
 
+        // used for execute in results (AND/OR)
         internal abstract IEnumerable<IndexNode> Execute(LiteEngine engine, CollectionIndex index);
 
         internal virtual IEnumerable<IndexNode> Run(LiteEngine engine, CollectionPage col)
         {
-            var index = col.Indexes.FirstOrDefault(x => x.Field == this.Field);
+            var index = col.Indexes.FirstOrDefault(x => x.Field.Equals(this.Field, StringComparison.InvariantCultureIgnoreCase));
 
             if (index == null) throw new LiteException(string.Format("Index '{0}.{1}' not found. Use EnsureIndex to create a new index.", col.CollectionName, this.Field));
 

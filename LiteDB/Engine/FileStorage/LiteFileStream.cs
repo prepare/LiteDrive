@@ -14,15 +14,24 @@ namespace LiteDB
         private readonly long _streamLength = 0;
 
         private long _streamPosition = 0;
-        private ExtendPage _currentPage = null;
-        private int _positionInPage = 0;
+
+        private int _currentChunkIndex = 0;
+        private byte[] _currentChunkData = null;
+        private int _positionInChunk = 0;
 
         internal LiteFileStream(LiteEngine engine, FileEntry entry)
         {
             _engine = engine;
             _entry = entry;
 
-            _currentPage = engine.Disk.ReadPage<ExtendPage>(entry.PageID);
+            if (entry.Length == 0)
+            {
+                throw new LiteException("This file has no content or is corrupted");
+            }
+
+            _positionInChunk = 0;
+            _currentChunkIndex = 0;
+            _currentChunkData = this.GetChunkData(_currentChunkIndex);
         }
 
         /// <summary>
@@ -50,28 +59,40 @@ namespace LiteDB
         {
             int bytesLeft = count;
 
-            while (_currentPage != null && bytesLeft > 0)
+            while (_currentChunkData != null && bytesLeft > 0)
             {
-                int bytesToCopy = Math.Min(bytesLeft, _currentPage.Data.Length - _positionInPage);
-                Buffer.BlockCopy(_currentPage.Data, _positionInPage, buffer, offset, bytesToCopy);
+                var bytesToCopy = Math.Min(bytesLeft, _currentChunkData.Length - _positionInChunk);
 
-                _positionInPage += bytesToCopy;
+                Buffer.BlockCopy(_currentChunkData, _positionInChunk, buffer, offset, bytesToCopy);
+
+                _positionInChunk += bytesToCopy;
                 bytesLeft -= bytesToCopy;
                 offset += bytesToCopy;
                 _streamPosition += bytesToCopy;
 
-                if (_positionInPage >= _currentPage.Data.Length)
+                if (_positionInChunk >= _currentChunkData.Length)
                 {
-                    _positionInPage = 0;
+                    _positionInChunk = 0;
 
-                    if (_currentPage.NextPageID == uint.MaxValue)
-                        _currentPage = null;
-                    else
-                        _currentPage = _engine.Disk.ReadPage<ExtendPage>(_currentPage.NextPageID);
+                    _currentChunkData = this.GetChunkData(++_currentChunkIndex);
                 }
             }
 
             return count - bytesLeft;
+        }
+
+        private byte[] GetChunkData(int index)
+        {
+            // avoid too many extend pages on memory
+            _engine.Cache.RemoveExtendPages();
+
+            // check if there is no more chunks in this file
+            var chunks = _engine.GetCollection("_chunks");
+
+            var chunk = chunks.FindById(_entry.Id + "\\" + index);
+
+            // if chunk is null there is no more chunks
+            return chunk == null ? null : chunk["data"].AsByteArray;
         }
 
         #region Not supported operations

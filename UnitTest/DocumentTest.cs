@@ -11,11 +11,6 @@ namespace UnitTest
     [TestClass]
     public class DocumentTest
     {
-        [TestInitialize]
-        public void Init()
-        {
-        }
-
         [TestMethod]
         public void Document_Create()
         {

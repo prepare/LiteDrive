@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace LiteDB
 {
@@ -12,69 +13,123 @@ namespace LiteDB
     /// </summary>
     public class FileEntry
     {
-        public string Key { get; private set; }
-        public string Filename { get; private set; }
-        public string MimeType { get; private set; }
-        public int Length { get; internal set; }
+        /// <summary>
+        /// File id have a specific format - it's like file path.
+        /// </summary>
+        public const string ID_PATTERN = @"^[\w-$@!+%;\.]+(\/[\w-$@!+%;\.]+)*$";
+
+        /// <summary>
+        /// Number of bytes on each chunk document to store
+        /// </summary>
+        public const int CHUNK_SIZE = 50 * BasePage.PAGE_AVAILABLE_BYTES; // 50 extend page
+
+        public string Id { get; private set; }
+        public string Filename { get; set; }
+        public string MimeType { get; set; }
+        public long Length { get; private set; }
         public DateTime UploadDate { get; internal set; }
-        public NameValueCollection Metadata { get; internal set; }
+        public BsonObject Metadata { get; set; }
 
-        internal uint PageID { get; set; }
+        private LiteEngine _engine;
 
-        internal FileEntry(string key, string filename, NameValueCollection metadata)
+        public FileEntry(string id)
+            : this(id, id)
         {
-            this.Key = key;
-            this.Filename = filename;
+        }
+
+        public FileEntry(string id, string filename)
+        {
+            if (!Regex.IsMatch(id, ID_PATTERN)) throw new LiteException("Invalid file id format.");
+
+            this.Id = id;
+            this.Filename = Path.GetFileName(filename);
             this.MimeType = MimeTypeConverter.GetMimeType(this.Filename);
-            this.Metadata = metadata ?? new NameValueCollection();
+            this.Length = 0;
             this.UploadDate = DateTime.Now;
-
-            this.PageID = uint.MaxValue;
+            this.Metadata = new BsonObject();
         }
 
-        internal FileEntry(BsonDocument doc)
+        internal FileEntry(LiteEngine engine, BsonDocument doc)
         {
-            this.Key = doc.Id.ToString();
-            this.Filename = doc["Filename"].AsString;
-            this.MimeType = doc["MimeType"].AsString;
-            this.Length = doc["Length"].AsInt;
-            this.UploadDate = doc["UploadDate"].AsDateTime;
-            this.Metadata = new NameValueCollection();
-            this.Metadata.ParseQueryString(doc["Metadata"].AsString);
-            this.PageID = doc["PageID"].AsUInt;
+            _engine = engine;
+
+            this.Id = doc.Id.ToString();
+            this.Filename = doc["filename"].AsString;
+            this.MimeType = doc["mimeType"].AsString;
+            this.Length = doc["length"].AsLong;
+            this.UploadDate = doc["uploadDate"].AsDateTime;
+            this.Metadata = doc["metadata"].AsObject;
         }
 
-        internal BsonDocument ToBsonDocument()
+        public BsonDocument AsDocument
         {
-            var doc = new BsonDocument();
+            get
+            {
+                var doc = new BsonDocument();
 
-            doc.Id = this.Key;
-            doc["Filename"] = this.Filename;
-            doc["MimeType"] = this.MimeType;
-            doc["Length"] = this.Length;
-            doc["UploadDate"] = this.UploadDate;
-            doc["Metadata"] = this.Metadata.ToString();
-            doc["PageID"] = this.PageID;
+                doc.Id = this.Id;
+                doc["filename"] = this.Filename;
+                doc["mimeType"] = this.MimeType;
+                doc["length"] = this.Length;
+                doc["uploadDate"] = this.UploadDate;
+                doc["metadata"] = this.Metadata ?? new BsonObject();
 
-            return doc;
+                return doc;
+            }
+        }
+
+        internal IEnumerable<BsonDocument> CreateChunks(Stream stream)
+        {
+            var buffer = new byte[CHUNK_SIZE];
+            var read = 0;
+            var index = 0;
+
+            while ((read = stream.Read(buffer, 0, FileEntry.CHUNK_SIZE)) > 0)
+            {
+                this.Length += (long)read;
+
+                var chunk = new BsonDocument
+                {
+                    Id = string.Format("{0}\\{1}", this.Id, index++) // index zero based
+                };
+
+                if (read != CHUNK_SIZE)
+                {
+                    var bytes = new byte[read];
+                    Array.Copy(buffer, bytes, read);
+                    chunk["data"] = bytes;
+                }
+                else
+                {
+                    chunk["data"] = buffer;
+                }
+
+                yield return chunk;
+            }
+
+            yield break;
         }
 
         /// <summary>
         /// Open file stream to read from database
         /// </summary>
-        public LiteFileStream OpenRead(LiteEngine db)
+        public LiteFileStream OpenRead()
         {
-            return new LiteFileStream(db, this);
+            if (_engine == null) throw new LiteException("This FileEntry instance don't have reference to LiteEngine database");
+
+            return new LiteFileStream(_engine, this);
         }
 
         /// <summary>
         /// Save file content to a external file
         /// </summary>
-        public void SaveAs(LiteEngine db, string filename, bool overwritten = true)
+        public void SaveAs(string filename, bool overwritten = true)
         {
+            if (_engine == null) throw new LiteException("This FileEntry instance don't have reference to LiteEngine database");
+
             using (var file = new FileStream(filename, overwritten ? FileMode.Create : FileMode.CreateNew))
             {
-                this.OpenRead(db).CopyTo(file);
+                this.OpenRead().CopyTo(file);
             }
         }
     }

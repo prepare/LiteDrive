@@ -38,19 +38,6 @@ namespace LiteDB
         /// </summary>
         public int UserVersion { get; set; }
 
-        /// <summary>
-        /// Get/Set max datafile size
-        /// </summary>
-        public long MaxFileLength { get; set; }
-
-        /// <summary>
-        /// Get max page ID for this datafile
-        /// </summary>
-        internal uint MaxPageID
-        {
-            get { return this.MaxFileLength == long.MaxValue ? uint.MaxValue : (uint)(this.MaxFileLength / BasePage.PAGE_SIZE); }
-        }
-
         public HeaderPage()
             : base()
         {
@@ -59,8 +46,19 @@ namespace LiteDB
             this.FreeEmptyPageID = uint.MaxValue;
             this.ChangeID = 0;
             this.LastPageID = 0;
-            this.UserVersion = 1;
-            this.MaxFileLength = long.MaxValue;
+            this.UserVersion = 0;
+            this.FreeBytes = 0; // no free bytes on header
+        }
+
+        public override void ReadHeader(BinaryReader reader)
+        {
+            reader.Seek(4); // skip byte 0 - it's loked in a transaction
+            //this.PageID = reader.ReadUInt32();
+            this.PrevPageID = reader.ReadUInt32();
+            this.NextPageID = reader.ReadUInt32();
+            this.PageType = (PageType)reader.ReadByte();
+            this.ItemCount = reader.ReadUInt16();
+            this.FreeBytes = reader.ReadInt32();
         }
 
         public override void ReadContent(BinaryReader reader)
@@ -77,7 +75,6 @@ namespace LiteDB
             this.FreeEmptyPageID = reader.ReadUInt32();
             this.LastPageID = reader.ReadUInt32();
             this.UserVersion = reader.ReadInt32();
-            this.MaxFileLength = reader.ReadInt64();
         }
 
         public override void WriteContent(BinaryWriter writer)
@@ -88,7 +85,6 @@ namespace LiteDB
             writer.Write(this.FreeEmptyPageID);
             writer.Write(this.LastPageID);
             writer.Write(this.UserVersion);
-            writer.Write(this.MaxFileLength);
         }
     }
 }
