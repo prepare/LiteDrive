@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Windows.Forms;
 
-namespace LiteDriveTest
+namespace LiteStoreTest
 {
     static class Program
     {

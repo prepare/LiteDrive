@@ -1,4 +1,4 @@
-﻿namespace LiteDriveTest
+﻿namespace LiteStoreTest
 {
     partial class Form1
     {

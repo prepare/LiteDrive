@@ -1,4 +1,5 @@
-﻿using System;
+﻿//MIT 2015, WinterDev
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 
@@ -8,7 +9,7 @@ using System.Windows.Forms;
 using System.IO;
 
 using LiteDB;
-namespace LiteDriveTest
+namespace LiteStoreTest
 {
     public partial class Form1 : Form
     {

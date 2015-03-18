@@ -8,8 +8,8 @@
     <ProjectGuid>{F43D04D0-D560-48BA-A9AD-8CAD489303DE}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>LiteDriveTest</RootNamespace>
-    <AssemblyName>LiteDriveTest</AssemblyName>
+    <RootNamespace>LiteStoreTest</RootNamespace>
+    <AssemblyName>LiteStoreTest</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -58,6 +58,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -78,9 +79,9 @@
       <Project>{1F204082-6E3D-4661-8223-379D77B92C66}</Project>
       <Name>LiteDisk</Name>
     </ProjectReference>
-    <ProjectReference Include="..\LiteDrive\LiteDrive.csproj">
-      <Project>{7F8D06BA-6875-4C86-9DEC-FF7CB13D928E}</Project>
-      <Name>LiteDrive</Name>
+    <ProjectReference Include="..\LiteStore\LiteStore.csproj">
+      <Project>{728C7F9B-E9B3-4143-ADEC-1FC84708E21E}</Project>
+      <Name>LiteStore</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
