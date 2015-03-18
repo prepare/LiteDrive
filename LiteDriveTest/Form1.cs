@@ -19,7 +19,7 @@ namespace LiteDriveTest
 
         private void button1_Click(object sender, EventArgs e)
         {
-            string dbFilename = "d:\\WImageTest\\litedisk1.disk";
+            string dbFilename = "..\\..\\output\\litedisk1.disk";
             if (System.IO.File.Exists(dbFilename))
             {
                 System.IO.File.Delete(dbFilename);
@@ -68,7 +68,7 @@ namespace LiteDriveTest
                     listCollection.FindById(1) != null)
                 {
                     throw new Exception();
-                } 
+                }
             }
             //-----------------------------------------------------------------
         }

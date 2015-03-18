@@ -13,46 +13,43 @@ namespace LiteDB
     /// </summary>
     internal class RecoveryService
     {
-        const int ERROR_SHARING_VIOLATION = 32;
-        const int ERROR_LOCK_VIOLATION = 33;
-
         private ConnectionString _connectionString;
-
-        public string RedoFile { get; private set; }
 
         public RecoveryService(ConnectionString connectionString)
         {
             _connectionString = connectionString;
-
-            this.RedoFile = Path.ChangeExtension(_connectionString.Filename, ".redo");
         }
 
         public void TryRecovery()
         {
-            // no recovery file, nothing to do
-            if (!File.Exists(this.RedoFile)) return;
+            var journal = JournalService.GetJournalFilename(_connectionString, false);
 
-            // check if file is not in use
-            this.IsFileInUse(this.RedoFile, (stream) =>
+            // no journal file, nothing to do
+            if (string.IsNullOrEmpty(journal)) return;
+
+            // if I can open journal file, test FINISH_POSITION
+            this.OpenExclusiveFile(journal, (stream) =>
             {
                 // check if FINISH_POSITON is true
                 using (var reader = new BinaryReader(stream))
                 {
-                    reader.Seek(RedoService.FINISH_POSITION);
+                    stream.Seek(JournalService.FINISH_POSITION, SeekOrigin.Begin);
 
-                    // if not finish, datafile is intact and no chances are comited
+                    // if file is finish, datafile needs to be recovery. if not,
+                    // the failure ocurrs during write journal file but not finish - just discard it
                     if (reader.ReadBoolean() == true)
                     {
                         this.DoRecovery(reader);
-
-                        // work done. datafile is correct again
-                        return;
                     }
                 }
+
+                // close stream for delete file
+                stream.Close();
+
+                File.Delete(journal);
             });
 
-            // redo file exisits, but is invalid. just deleted
-            File.Delete(this.RedoFile);
+            // if I can't open, it's in use (and it's ok, there is a transaction executing in another process)
         }
 
         private void DoRecovery(BinaryReader reader)
@@ -62,34 +59,28 @@ namespace LiteDB
             {
                 disk.Lock();
 
-                uint index = 0;
-
                 // while pages, read from redo, write on disk
-                while (reader.PeekChar() >= 0)
+                while (reader.BaseStream.Position != reader.BaseStream.Length)
                 {
-                    var page = this.ReadPage(index++, reader);
+                    var page = this.ReadPageJournal(reader);
 
                     disk.WritePage(page);
                 }
 
                 reader.Close();
 
-                File.Delete(this.RedoFile);
-
                 disk.UnLock();
             }
         }
 
-        private BasePage ReadPage(uint index, BinaryReader reader)
+        private BasePage ReadPageJournal(BinaryReader reader)
         {
-            // Position cursor
-            reader.Seek(index * BasePage.PAGE_SIZE);
+            var stream = reader.BaseStream;
+            var posStart = stream.Position * BasePage.PAGE_SIZE;
+            var posEnd = posStart + BasePage.PAGE_SIZE;
 
             // Create page instance and read from disk (read page header + content page)
             var page = new BasePage();
-
-            // target = it's the target position after reader header. It's used when header does not conaints all PAGE_HEADER_SIZE
-            var target = reader.BaseStream.Position + BasePage.PAGE_HEADER_SIZE;
 
             // read page header
             page.ReadHeader(reader);
@@ -104,35 +95,29 @@ namespace LiteDB
             // read page content if page is not empty
             if (page.PageType != PageType.Empty)
             {
-                // position reader to the end of page header
-                reader.BaseStream.Seek(target - reader.BaseStream.Position, SeekOrigin.Current);
-
                 // read page content
                 page.ReadContent(reader);
             }
 
+            // read non-used bytes on page and position cursor to next page
+            reader.ReadBytes((int)(posEnd - stream.Position));
+
             return page;
         }
 
-        private void IsFileInUse(string filename, Action<FileStream> fn)
+        private void OpenExclusiveFile(string filename, Action<FileStream> success)
         {
             // check if is using by another process, if not, call fn passing stream opened
             try
             {
                 using (var stream = File.Open(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
                 {
-                    fn(stream);
+                    success(stream);
                 }
             }
-            catch (IOException exception)
+            catch (IOException ex)
             {
-                int errorCode = Marshal.GetHRForException(exception) & ((1 << 16) - 1);
-                if (errorCode == ERROR_SHARING_VIOLATION || errorCode == ERROR_LOCK_VIOLATION)
-                {
-                    // file in use by another process, do nothing
-                    return;
-                }
-                throw exception;
+                ex.WaitIfLocked(0);
             }
         }
     }

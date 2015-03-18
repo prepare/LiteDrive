@@ -18,19 +18,14 @@ namespace LiteDB
         public const int PAGE_SIZE = 4096;
 
         /// <summary>
-        /// This size is used bytes in header pages [17 bytes + 19 reserved] 
+        /// This size is used bytes in header pages 17 bytes
         /// </summary>
-        public const int PAGE_HEADER_SIZE = 36;
+        public const int PAGE_HEADER_SIZE = 17;
 
         /// <summary>
-        /// Bytes avaiable to store data removing page header size
+        /// Bytes avaiable to store data removing page header size - 4079 bytes
         /// </summary>
         public const int PAGE_AVAILABLE_BYTES = PAGE_SIZE - PAGE_HEADER_SIZE;
-
-        /// <summary>
-        /// If a page has less that this number, it's considered full page for new items. Can be used only for update (DataPage) ~ 15% PAGE_SIZE
-        /// </summary>
-        public const int RESERVED_BYTES = 600;
 
         #endregion
 
@@ -56,13 +51,16 @@ namespace LiteDB
 
         /// <summary>
         /// Used for all pages to count itens inside this page(bytes, nodes, blocks, ...)
+        /// Its Int32 but writes in UInt16
         /// </summary>
         public int ItemCount { get; set; }
 
         /// <summary>
-        /// Must be overite for each page. Used to find a free page using only header search [used in FreeList]
+        /// Used to find a free page using only header search [used in FreeList]
+        /// Its Int32 but writes in UInt16
+        /// Its updated when a page modify content length (add/remove items)
         /// </summary>
-        public virtual int FreeBytes { get; set; }
+        public int FreeBytes { get; set; }
 
         /// <summary>
         /// Indicate that this page is dirty (was modified) and must persist when commited [not-persistable]
@@ -74,16 +72,18 @@ namespace LiteDB
             this.PrevPageID = uint.MaxValue;
             this.NextPageID = uint.MaxValue;
             this.PageType = LiteDB.PageType.Empty;
+            this.ItemCount = 0;
             this.FreeBytes = PAGE_AVAILABLE_BYTES;
         }
 
         /// <summary>
-        /// Used in all specific page to update ItemCount before write on disk
+        /// Every page must imeplement this ItemCount + FreeBytes
+        /// Must be called after Items are updates (insert/deletes) to keep variables ItemCount and FreeBytes synced
         /// </summary>
-        protected virtual void UpdateItemCount()
+        public virtual void UpdateItemCount()
         {
-            // must be implemented in all pages types
             this.ItemCount = 0;
+            this.FreeBytes = PAGE_AVAILABLE_BYTES;
         }
 
         /// <summary>
@@ -93,8 +93,9 @@ namespace LiteDB
         {
             this.PrevPageID = uint.MaxValue;
             this.NextPageID = uint.MaxValue;
-            this.PageType = LiteDB.PageType.Empty;
+            this.PageType = PageType.Empty;
             this.FreeBytes = PAGE_AVAILABLE_BYTES;
+            this.ItemCount = 0;
         }
 
         /// <summary>
@@ -109,6 +110,7 @@ namespace LiteDB
             page.NextPageID = this.NextPageID;
             page.PageType = this.PageType;
             page.ItemCount = this.ItemCount;
+            page.FreeBytes = this.FreeBytes;
             page.IsDirty = this.IsDirty;
 
             return page;
@@ -123,7 +125,7 @@ namespace LiteDB
             this.NextPageID = reader.ReadUInt32();
             this.PageType = (PageType)reader.ReadByte();
             this.ItemCount = reader.ReadUInt16();
-            this.FreeBytes = reader.ReadInt32();
+            this.FreeBytes = reader.ReadUInt16();
         }
 
         public virtual void WriteHeader(BinaryWriter writer)
@@ -132,9 +134,8 @@ namespace LiteDB
             writer.Write(this.PrevPageID);
             writer.Write(this.NextPageID);
             writer.Write((byte)this.PageType);
-            UpdateItemCount(); // updating ItemCount before save on disk
             writer.Write((UInt16)this.ItemCount);
-            writer.Write(this.FreeBytes);
+            writer.Write((UInt16)this.FreeBytes);
         }
 
         #endregion
