@@ -21,14 +21,16 @@ namespace LiteDB
             return next;
         }
 
-        public static object Get(this Dictionary<string, object> dict, string name)
+        public static T GetOrDefault<K, T>(this IDictionary<K, T> dict, K key, T defaultValue = default(T))
         {
-            return dict.ContainsKey(name) ? dict[name] : null;
-        }
+            T result;
 
-        public static BsonValue Get(this Dictionary<string, BsonValue> dict, string name)
-        {
-            return dict.ContainsKey(name) ? dict[name] : BsonValue.Null;
+            if (dict.TryGetValue(key, out result))
+            {
+                return result;
+            }
+
+            return defaultValue;
         }
     }
 }

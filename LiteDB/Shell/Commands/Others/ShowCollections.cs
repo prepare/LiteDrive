@@ -6,18 +6,18 @@ using System.Text;
 
 namespace LiteDB.Shell.Commands
 {
-    public class ShowCollections : IShellCommand
+    internal class ShowCollections : ILiteCommand
     {
         public bool IsCommand(StringScanner s)
         {
             return s.Match(@"show\scollections");
         }
 
-        public void Execute(LiteEngine db, StringScanner s, Display display)
+        public BsonValue Execute(LiteDatabase db, StringScanner s)
         {
-            if (db == null) throw new LiteException("No database");
+            var cols = db.GetCollectionNames().OrderBy(x => x).ToArray();
 
-            display.WriteResult(string.Join("\n", db.GetCollections().OrderBy(x => x).ToArray()));
+            return string.Join(Environment.NewLine, cols);
         }
     }
 }
