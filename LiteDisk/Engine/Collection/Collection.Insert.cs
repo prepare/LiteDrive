@@ -30,7 +30,8 @@ namespace LiteDB
                 var col = this.GetCollectionPage();
 
                 // storage in data pages - returns dataBlock address
-                var dataBlock = _engine.Data.Insert(col, new IndexKey(serializedObject.Id), serializedObject.Content);
+                var dataBlock = _engine.Data.Insert(col, new IndexKey(serializedObject.Id), 
+                    serializedObject.GetBlob());
 
                 // store id in a PK index [0 array]
                 var pk = _engine.Indexer.AddNode(col.PK, serializedObject.Id);
