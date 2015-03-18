@@ -11,7 +11,7 @@ namespace LiteDB
     /// Represent all cache system and track dirty pages. All pages that load and need to be track for
     /// dirty (to be persist after) must be added in this class.
     /// </summary>
-    internal class CacheService
+    internal class CacheService : IDisposable
     {
         // a very simple dictionary for pages cache and track
         private SortedDictionary<uint, BasePage> _cache;
@@ -52,7 +52,7 @@ namespace LiteDB
         public T GetPage<T>(uint pageID)
             where T : BasePage
         {
-            var page = _cache.ContainsKey(pageID) ? _cache[pageID] : null;
+            var page = _cache.GetOrDefault(pageID, null);
 
             // if a need a specific page but has a BasePage, returns null
             if (page != null && page.GetType() == typeof(BasePage) && typeof(T) != typeof(BasePage))
@@ -125,22 +125,16 @@ namespace LiteDB
                 yield return _header;
             }
 
-            // for a better performance - writes last page first
-            var last = _cache.Values.Where(x => x.IsDirty).LastOrDefault();
-            var lastPageID = last == null ? uint.MaxValue : last.PageID;
-
-            if (last != null)
-            {
-                // when write last page, OS will alocate all disk space at once.
-                // This will be much faster to save others pages in sequence
-                yield return last;
-            }
-
             // now returns all pages in sequence
-            foreach (var page in _cache.Values.Where(x => x.IsDirty && x.PageID != lastPageID))
+            foreach (var page in _cache.Values.Where(x => x.IsDirty))
             {
                 yield return page;
             }
+        }
+
+        public void Dispose()
+        {
+            this.Clear(null);
         }
     }
 }

@@ -11,11 +11,13 @@ namespace LiteDB
     {
         private PageService _pager;
         private IndexService _indexer;
+        private DataService _data;
 
-        public CollectionService(PageService pager, IndexService indexer)
+        public CollectionService(PageService pager, IndexService indexer, DataService data)
         {
             _pager = pager;
             _indexer = indexer;
+            _data = data;
         }
 
         /// <summary>
@@ -38,7 +40,7 @@ namespace LiteDB
         public CollectionPage Add(string name)
         {
             if(string.IsNullOrEmpty(name)) throw new ArgumentNullException("name");
-            if(!Regex.IsMatch(name, CollectionPage.NAME_PATTERN)) throw new LiteException("Invalid collection name. Use only letters, numbers and _");
+            if(!CollectionPage.NamePattern.IsMatch(name)) throw new LiteException("Invalid collection name. Use only letters, numbers and _");
 
             var pages = _pager.GetSeqPages<CollectionPage>(1); // PageID 1 = Master Collection
 
@@ -48,7 +50,9 @@ namespace LiteDB
             }
 
             if (pages.Count() >= CollectionPage.MAX_COLLECTIONS)
+            {
                 throw new LiteException("This database exceded max collections: " + CollectionPage.MAX_COLLECTIONS);
+            }
 
             var col = _pager.NewPage<CollectionPage>(pages.Last());
 
@@ -56,10 +60,10 @@ namespace LiteDB
             col.IsDirty = true;
 
             // create PK index
-            var pk = _indexer.CreateIndex(col.PK);
+            var pk = _indexer.CreateIndex(col);
 
             pk.Field = "_id";
-            pk.Unique = true;
+            pk.Options = new IndexOptions { Unique = true };
 
             return col;
         }
@@ -72,26 +76,55 @@ namespace LiteDB
             return _pager.GetSeqPages<CollectionPage>(1); // PageID 1 = Master Collection
         }
 
+        /// <summary>
+        /// Drop a collection - remove all data pages + indexes pages
+        /// </summary>
         public void Drop(CollectionPage col)
         {
-            // delete all index pages
-            for (byte i = 0; i < col.Indexes.Length; i++)
-            {
-                var index = col.Indexes[i];
+            // add all pages to delete
+            var pages = new HashSet<uint>();
 
-                if (!index.IsEmpty)
+            // search for all data page and index page
+            foreach (var index in col.GetIndexes(true))
+            {
+                // get all nodes from index
+                var nodes = _indexer.FindAll(index, Query.Ascending);
+
+                foreach (var node in nodes)
                 {
-                    _pager.DeletePage(index.HeadNode.PageID);
+                    // if is PK index, add dataPages
+                    if(index.Slot == 0)
+                    {
+                        pages.Add(node.DataBlock.PageID);
+
+                        // read datablock to check if there is any extended page
+                        var block = _data.Read(node.DataBlock, false);
+
+                        if (block.ExtendPageID != uint.MaxValue)
+                        {
+                            _pager.DeletePage(block.ExtendPageID, true);
+                        }
+                    }
+
+                    // add index page to delete list page
+                    pages.Add(node.Position.PageID);
                 }
             }
 
-            // ajust page pointers
+            // and now, lets delete all this pages
+            foreach (var pageID in pages)
+            {
+                _pager.DeletePage(pageID);
+            }
+
+            // ajust collection page pointers
             if (col.PrevPageID != uint.MaxValue)
             {
                 var prev = _pager.GetPage<BasePage>(col.PrevPageID);
                 prev.NextPageID = col.NextPageID;
                 prev.IsDirty = true;
             }
+
             if (col.NextPageID != uint.MaxValue)
             {
                 var next = _pager.GetPage<BasePage>(col.NextPageID);
