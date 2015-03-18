@@ -1,4 +1,5 @@
-﻿using System;
+﻿//MIT, 2014-2015 Mauricio David
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -27,7 +28,7 @@ namespace LiteDB
             if (indexNode == null) return false;
 
             // serialize object
-            var bytes = serializedObject.Content;
+            var bytes = serializedObject.GetBlob();
 
             // start transaction - if clear cache, get again collection page
             if (_engine.Transaction.Begin())
@@ -39,15 +40,15 @@ namespace LiteDB
             {
                 // update data storage
                 var dataBlock = _engine.Data.Update(col, indexNode.DataBlock, bytes);
-
                 // delete/insert indexes - do not touch on PK
+
                 for (byte i = 1; i < col.Indexes.Length; i++)
                 {
                     var index = col.Indexes[i];
 
                     if (!index.IsEmpty)
                     {
-                        //var key = BsonSerializer.GetFieldValue(doc, index.Field);
+                        
                         var key = serializedObject.GetFieldValue(index.Field);
 
                         var node = _engine.Indexer.GetNode(dataBlock.IndexRef[i]);

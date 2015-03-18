@@ -1,4 +1,5 @@
-﻿using System;
+﻿//MIT, 2014-2015 Mauricio David
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -131,7 +132,8 @@ namespace LiteDB
                 catch (IOException)
                 {
                     // Watch the file waiting for changes. When change, try again
-                    using (var w = new FileSystemWatcher(Path.GetDirectoryName(_connectionString.Filename), Path.GetFileName(_connectionString.Filename)))
+                    using (var w = new FileSystemWatcher(Path.GetDirectoryName(_connectionString.Filename),
+                        Path.GetFileName(_connectionString.Filename)))
                     {
                         w.EnableRaisingEvents = true;
 

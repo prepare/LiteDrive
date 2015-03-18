@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{7F8D06BA-6875-4C86-9DEC-FF7CB13D928E}</ProjectGuid>
+    <ProjectGuid>{728C7F9B-E9B3-4143-ADEC-1FC84708E21E}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>LiteDrive</RootNamespace>
-    <AssemblyName>LiteDrive</AssemblyName>
+    <RootNamespace>LiteStore</RootNamespace>
+    <AssemblyName>LiteStore</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

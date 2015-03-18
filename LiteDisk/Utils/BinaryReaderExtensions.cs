@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-
+﻿//MIT, 2014-2015 Mauricio David
+using System;
+using System.Collections.Generic; 
 using System.Text;
 using System.IO;
 
