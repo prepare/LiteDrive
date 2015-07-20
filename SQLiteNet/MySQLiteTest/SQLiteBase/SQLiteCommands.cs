@@ -279,7 +279,7 @@ namespace SQLite
             }
         }
 
-        internal static IntPtr NegativePointer = new IntPtr(-1);
+        static IntPtr NegativePointer = new IntPtr(-1);
 
         internal static void BindParameter(Sqlite3Statement stmt, int index, object value, bool storeDateTimeAsTicks)
         {
@@ -473,13 +473,13 @@ namespace SQLite
     /// </summary>
     public class PreparedSqlLiteInsertCommand : IDisposable
     {
-        public bool Initialized { get; set; }
+        public bool Initialized { get; private set; }
 
-        protected SQLiteConnection Connection { get; set; }
+        SQLiteConnection Connection { get; set; }
 
         public string CommandText { get; set; }
 
-        protected Sqlite3Statement Statement { get; set; }
+        Sqlite3Statement Statement { get; set; }
         internal static readonly Sqlite3Statement NullStatement = default(Sqlite3Statement);
 
         internal PreparedSqlLiteInsertCommand(SQLiteConnection conn)
@@ -494,7 +494,7 @@ namespace SQLite
                 Debug.WriteLine("Executing: " + CommandText);
             }
 
-            var r = SQLite3.Result.OK;
+
 
             if (!Initialized)
             {
@@ -510,30 +510,37 @@ namespace SQLite
                     SQLiteCommand.BindParameter(Statement, i + 1, source[i], Connection.StoreDateTimeAsTicks);
                 }
             }
-            r = SQLite3.Step(Statement);
 
-            if (r == SQLite3.Result.Done)
+            var r = SQLite3.Step(Statement);
+
+            switch (r)
             {
-                int rowsAffected = SQLite3.Changes(Connection.Handle);
-                SQLite3.Reset(Statement);
-                return rowsAffected;
-            }
-            else if (r == SQLite3.Result.Error)
-            {
-                string msg = SQLite3.GetErrmsg(Connection.Handle);
-                SQLite3.Reset(Statement);
-                throw SQLiteException.New(r, msg);
-            }
-            else if (r == SQLite3.Result.Constraint && SQLite3.ExtendedErrCode(Connection.Handle) == SQLite3.ExtendedResult.ConstraintNotNull)
-            {
-                SQLite3.Reset(Statement);
-                throw NotNullConstraintViolationException.New(r, SQLite3.GetErrmsg(Connection.Handle));
-            }
-            else
-            {
-                SQLite3.Reset(Statement);
-                throw SQLiteException.New(r, r.ToString());
-            }
+                case SQLite3.Result.Done:
+                    int rowsAffected = SQLite3.Changes(Connection.Handle);
+                    SQLite3.Reset(Statement);
+                    return rowsAffected;
+                case SQLite3.Result.Error:
+                    {
+                        string msg = SQLite3.GetErrmsg(Connection.Handle);
+                        SQLite3.Reset(Statement);
+                        throw SQLiteException.New(r, msg);
+                    }
+                default:
+                    {
+                        if (r == SQLite3.Result.Constraint &&
+                            SQLite3.ExtendedErrCode(Connection.Handle) == SQLite3.ExtendedResult.ConstraintNotNull)
+                        {
+                            string msg = SQLite3.GetErrmsg(Connection.Handle);
+                            SQLite3.Reset(Statement);
+                            throw SQLiteException.New(r, msg);
+                        }
+                        else
+                        {
+                            SQLite3.Reset(Statement);
+                            throw SQLiteException.New(r, r.ToString());
+                        }
+                    }
+            } 
         }
 
         protected virtual Sqlite3Statement Prepare()
