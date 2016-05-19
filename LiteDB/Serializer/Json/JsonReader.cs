@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace LiteDB
 {
@@ -69,20 +66,21 @@ namespace LiteDB
                 case JsonTokenType.String: return token.Token;
                 case JsonTokenType.BeginDoc: return this.ReadObject();
                 case JsonTokenType.BeginArray: return this.ReadArray();
-                case JsonTokenType.Number: return token.Token.Contains(".") ? 
-                    new BsonValue(Convert.ToDouble(token.Token, CultureInfo.InvariantCulture.NumberFormat)) : 
-                    new BsonValue(Convert.ToInt32(token.Token));
+                case JsonTokenType.Number:
+                    return token.Token.Contains(".") ?
+                        new BsonValue(Convert.ToDouble(token.Token, CultureInfo.InvariantCulture.NumberFormat)) :
+                        new BsonValue(Convert.ToInt32(token.Token));
                 case JsonTokenType.Word:
                     switch (token.Token)
                     {
                         case "null": return BsonValue.Null;
                         case "true": return true;
                         case "false": return false;
-                        default: throw new LiteException("Unexpected json token: " + token.Token);
+                        default: throw LiteException.UnexpectedToken(token.Token);
                     }
             }
 
-            throw new LiteException("Unexpected json token: " + token.Token);
+            throw LiteException.UnexpectedToken(token.Token);
         }
 
         private BsonValue ReadObject()
@@ -109,14 +107,14 @@ namespace LiteDB
                     var val = this.ReadExtendedDataType(key, token.Token);
 
                     // if val is null then it's not a extended data type - it's just a object with $ attribute
-                    if(!val.IsNull) return val;
+                    if (!val.IsNull) return val;
                 }
 
                 obj[key] = this.ReadValue(token); // read "," or "}"
 
                 token = _tokenizer.ReadToken();
 
-                if(token.TokenType == JsonTokenType.Comma)
+                if (token.TokenType == JsonTokenType.Comma)
                 {
                     token = _tokenizer.ReadToken(); // read "<key>"
                 }
@@ -139,7 +137,7 @@ namespace LiteDB
 
                 token = _tokenizer.ReadToken();
 
-                if(token.TokenType == JsonTokenType.Comma)
+                if (token.TokenType == JsonTokenType.Comma)
                 {
                     token = _tokenizer.ReadToken();
                 }
@@ -169,6 +167,5 @@ namespace LiteDB
 
             return val;
         }
-
     }
 }

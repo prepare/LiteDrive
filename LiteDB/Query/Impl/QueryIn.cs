@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace LiteDB
 {
@@ -25,20 +22,6 @@ namespace LiteDB
                     yield return node;
                 }
             }
-        }
-
-        internal override bool ExecuteFullScan(BsonDocument doc)
-        {
-            var val = doc.Get(this.Field);
-
-            foreach (var value in _values.Distinct())
-            {
-                var diff = val.CompareTo(value);
-
-                if (diff == 0) return true;
-            }
-
-            return false;
         }
     }
 }

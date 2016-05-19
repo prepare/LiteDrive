@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace LiteDB
 {
@@ -23,12 +20,7 @@ namespace LiteDB
         {
             var value = _value.Normalize(index.Options);
 
-            return indexer.FindAll(index, Query.Ascending).Where(x => x.Value.CompareTo(value) != 0);
-        }
-
-        internal override bool ExecuteFullScan(BsonDocument doc)
-        {
-            return doc.Get(this.Field).CompareTo(_value) != 0;
+            return indexer.FindAll(index, Query.Ascending).Where(x => x.Key.CompareTo(value) != 0);
         }
     }
 }

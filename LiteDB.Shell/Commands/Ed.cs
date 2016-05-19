@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 
 namespace LiteDB.Shell.Commands
 {
@@ -15,7 +11,7 @@ namespace LiteDB.Shell.Commands
             return s.Match(@"ed$");
         }
 
-        public override void Execute(LiteShell shell, StringScanner s, Display display, InputCommand input)
+        public override void Execute(ref IShellEngine engine, StringScanner s, Display display, InputCommand input)
         {
             var temp = Path.GetTempPath() + "LiteDB.Shell.txt";
 

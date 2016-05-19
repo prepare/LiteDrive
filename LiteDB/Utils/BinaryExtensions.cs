@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.IO;
 
 namespace LiteDB
 {
@@ -21,7 +18,7 @@ namespace LiteDB
             for (; 0 == result && i < stop; i++)
                 result = lh[i].CompareTo(rh[i]);
 
-            if (result != 0) return result;
+            if (result != 0) return result < 0 ? -1 : 1;
             if (i == lh.Length) return i == rh.Length ? 0 : -1;
             return 1;
         }

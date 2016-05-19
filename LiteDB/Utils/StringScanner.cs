@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace LiteDB
 {
     /// <summary>
     /// A StringScanner is state machine used in text parsers based on regular expressions
     /// </summary>
-    public class StringScanner
+    internal class StringScanner
     {
         public string Source { get; private set; }
         public int Index { get; private set; }

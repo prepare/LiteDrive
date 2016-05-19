@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace LiteDB
 {
@@ -26,7 +22,7 @@ namespace LiteDB
             // navigate using next[0] do next node - if less or equals returns
             while (node != null)
             {
-                var valueString = node.Value.AsString;
+                var valueString = node.Key.AsString;
 
                 // value will not be null because null occurs before string (bsontype sort order)
                 if (valueString.StartsWith(str))
@@ -43,15 +39,6 @@ namespace LiteDB
 
                 node = indexer.GetNode(node.Next[0]);
             }
-        }
-
-        internal override bool ExecuteFullScan(BsonDocument doc)
-        {
-            var val = doc.Get(this.Field);
-
-            if(!val.IsString) return false;
-
-            return val.AsString.StartsWith(_value.AsString);
         }
     }
 }

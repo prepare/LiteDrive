@@ -1,23 +1,16 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
+﻿using System;
 
 namespace LiteDB
 {
     /// <summary>
-    /// Add an index in this property. Used in POCO classes
+    /// Add an index in this entity property.
     /// </summary>
     public class BsonIndexAttribute : Attribute
     {
         public IndexOptions Options { get; private set; }
 
         public BsonIndexAttribute()
-            : this (new IndexOptions())
+            : this(new IndexOptions())
         {
         }
 
@@ -26,10 +19,25 @@ namespace LiteDB
         {
         }
 
-        public BsonIndexAttribute(IndexOptions options)
+        public BsonIndexAttribute(
+            bool unique = false,
+            bool ignoreCase = true,
+            bool trimWhiteSpace = true,
+            bool emptyStringToNull = true,
+            bool removeAccents = true)
+            : this(new IndexOptions
+            {
+                Unique = unique,
+                IgnoreCase = ignoreCase,
+                TrimWhitespace = trimWhiteSpace,
+                EmptyStringToNull = emptyStringToNull,
+                RemoveAccents = removeAccents
+            })
         {
-            if (options == null) throw new ArgumentNullException("options");
+        }
 
+        private BsonIndexAttribute(IndexOptions options)
+        {
             this.Options = options;
         }
     }

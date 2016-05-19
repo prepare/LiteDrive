@@ -1,24 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 
 namespace LiteDB.Shell.Commands
 {
-    internal class CollectionIndexes : BaseCollection, ILiteCommand
+    internal class CollectionIndexes : BaseCollection, IShellCommand
     {
         public bool IsCommand(StringScanner s)
         {
             return this.IsCollectionCommand(s, "indexes$");
         }
 
-        public BsonValue Execute(LiteDatabase db, StringScanner s)
+        public BsonValue Execute(DbEngine engine, StringScanner s)
         {
-            var col = this.ReadCollection(db, s);
-            var docs = col.GetIndexes();
+            var col = this.ReadCollection(engine, s);
 
-            return new BsonArray(docs);
+            return new BsonArray(engine.GetIndexes(col).Select(x => x.AsDocument));
         }
     }
 }

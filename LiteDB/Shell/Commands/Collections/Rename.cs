@@ -1,24 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-
-namespace LiteDB.Shell.Commands
+﻿namespace LiteDB.Shell.Commands
 {
-    internal class CollectionRename : BaseCollection, ILiteCommand
+    internal class CollectionRename : BaseCollection, IShellCommand
     {
         public bool IsCommand(StringScanner s)
         {
             return this.IsCollectionCommand(s, "rename");
         }
 
-        public BsonValue Execute(LiteDatabase db, StringScanner s)
+        public BsonValue Execute(DbEngine engine, StringScanner s)
         {
-            var col = this.ReadCollection(db, s);
-            var newName = s.Scan(@"\w+");
+            var col = this.ReadCollection(engine, s);
+            var newName = s.Scan(@"[\w-]+").ThrowIfEmpty("Invalid new collection name");
 
-            return db.RenameCollection(col.Name, newName);
+            return engine.RenameCollection(col, newName);
         }
     }
 }

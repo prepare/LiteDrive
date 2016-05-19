@@ -1,25 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
-using System.Linq;
-using System.Text;
-
-namespace LiteDB.Shell.Commands
+﻿namespace LiteDB.Shell.Commands
 {
-    internal class FileDownload : BaseFileStorage, ILiteCommand
+    internal class FileDownload : BaseFileStorage, IShellCommand
     {
         public bool IsCommand(StringScanner s)
         {
             return this.IsFileCommand(s, "download");
         }
 
-        public BsonValue Execute(LiteDatabase db, StringScanner s)
+        public BsonValue Execute(DbEngine engine, StringScanner s)
         {
+            var fs = new LiteFileStorage(engine);
             var id = this.ReadId(s);
             var filename = s.Scan(@"\s*.*").Trim();
 
-            var file = db.FileStorage.FindById(id);
+            var file = fs.FindById(id);
 
             if (file != null)
             {

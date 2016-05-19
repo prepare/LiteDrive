@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace LiteDB
 {
@@ -21,18 +18,11 @@ namespace LiteDB
 
         internal override IEnumerable<IndexNode> ExecuteIndex(IndexService indexer, CollectionIndex index)
         {
-            this.ExecuteMode = QueryExecuteMode.FullScan;
+            var v = _value.Normalize(index.Options);
 
-            return indexer.FindAll(index, Query.Ascending);
-        }
-
-        internal override bool ExecuteFullScan(BsonDocument doc)
-        {
-            var val = doc.Get(this.Field);
-
-            if(!val.IsString) return false;
-
-            return val.AsString.Contains(_value.AsString);
+            return indexer
+                .FindAll(index, Query.Ascending)
+                .Where(x => x.Key.IsString && x.Key.AsString.Contains(v));
         }
     }
 }
