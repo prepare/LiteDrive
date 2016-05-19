@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace LiteDB
 {
@@ -21,7 +16,7 @@ namespace LiteDB
         {
             if (this.TokenType != type)
             {
-                throw new LiteException("Unexpected json token: " + this.Token);
+                throw LiteException.UnexpectedToken(this.Token);
             }
         }
 
@@ -29,12 +24,12 @@ namespace LiteDB
         {
             if (this.TokenType != type1 && this.TokenType != type2)
             {
-                throw new LiteException("Unexpected json token: " + this.Token);
+                throw LiteException.UnexpectedToken(this.Token);
             }
         }
     }
 
-    #endregion
+    #endregion JsonToken
 
     /// <summary>
     /// Class that parse a json string and returns in json token
@@ -83,7 +78,7 @@ namespace LiteDB
         {
             this.EatWhitespace();
 
-            if (this.EOF) 
+            if (this.EOF)
             {
                 return new JsonToken { TokenType = JsonTokenType.EOF };
             }
@@ -96,29 +91,36 @@ namespace LiteDB
                     token = new JsonToken { TokenType = JsonTokenType.BeginArray, Token = "[" };
                     this.Read();
                     break;
+
                 case ']':
                     token = new JsonToken { TokenType = JsonTokenType.EndArray, Token = "]" };
                     this.Read();
                     break;
+
                 case '{':
                     token = new JsonToken { TokenType = JsonTokenType.BeginDoc, Token = "{" };
                     this.Read();
                     break;
+
                 case '}':
                     token = new JsonToken { TokenType = JsonTokenType.EndDoc, Token = "}" };
                     this.Read();
                     break;
+
                 case ':':
                     token = new JsonToken { TokenType = JsonTokenType.Colon, Token = ":" };
                     this.Read();
                     break;
+
                 case ',':
                     token = new JsonToken { TokenType = JsonTokenType.Comma, Token = "," };
                     this.Read();
                     break;
+
                 case '\"':
                     token = new JsonToken { TokenType = JsonTokenType.String, Token = this.ReadString() };
                     break;
+
                 case '-':
                 case '0':
                 case '1':
@@ -132,6 +134,7 @@ namespace LiteDB
                 case '9':
                     token = new JsonToken { TokenType = JsonTokenType.Number, Token = this.ReadNumber() };
                     break;
+
                 default:
                     token = new JsonToken { TokenType = JsonTokenType.Word, Token = this.ReadWord() };
                     break;
@@ -216,7 +219,7 @@ namespace LiteDB
                         case 'r': sb.Append('\r'); break;
                         case 't': sb.Append('\t'); break;
                         case 'u':
-                            var codePoint = ParseUnicode(_current, this.Read(), this.Read(), this.Read());
+                            var codePoint = this.ParseUnicode(this.Read(), this.Read(), this.Read(), this.Read());
                             sb.Append((char)codePoint);
                             break;
                     }
@@ -229,7 +232,7 @@ namespace LiteDB
                 this.Read();
             }
 
-            this.Read();
+            this.Read(); // read last "
 
             return sb.ToString();
         }

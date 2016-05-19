@@ -1,54 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace LiteDB.Shell
 {
-    public class LiteShell
+    internal class LiteShell
     {
-        public List<ILiteCommand> Commands { get; set; }
+        private static List<IShellCommand> _commands = new List<IShellCommand>();
 
-        public LiteDatabase Database { get; set; }
-
-        public LiteShell(LiteDatabase db)
+        static LiteShell()
         {
-            this.Database = db;
-            this.Commands = new List<ILiteCommand>();
-
-            var type = typeof(ILiteCommand);
+            var type = typeof(IShellCommand);
             var types = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
                 .Where(p => type.IsAssignableFrom(p) && p.IsClass);
 
             foreach (var t in types)
             {
-                this.Commands.Add((ILiteCommand)Activator.CreateInstance(t));
+                var cmd = (IShellCommand)Activator.CreateInstance(t);
+                _commands.Add(cmd);
             }
         }
 
-        public BsonValue Run(string command)
+        public BsonValue Run(DbEngine engine, string command)
         {
             if (string.IsNullOrEmpty(command)) return BsonValue.Null;
 
             var s = new StringScanner(command);
 
-            foreach (var cmd in this.Commands)
+            foreach (var cmd in _commands)
             {
                 if (cmd.IsCommand(s))
                 {
-                    if (this.Database == null)
-                    {
-                        throw new LiteException("No database. Use `open <filename>` to open/create database"); 
-                    }
-
-                    return cmd.Execute(this.Database, s);
+                    return cmd.Execute(engine, s);
                 }
             }
 
-            throw new LiteException("Command ´" + command + "´ is not a valid command");
+            throw LiteException.InvalidCommand(command);
         }
     }
 }

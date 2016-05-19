@@ -1,24 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-
-namespace LiteDB.Shell.Commands
+﻿namespace LiteDB.Shell.Commands
 {
-    internal class CollectionMax : BaseCollection, ILiteCommand
+    internal class CollectionMax : BaseCollection, IShellCommand
     {
         public bool IsCommand(StringScanner s)
         {
             return this.IsCollectionCommand(s, "max");
         }
 
-        public BsonValue Execute(LiteDatabase db, StringScanner s)
+        public BsonValue Execute(DbEngine engine, StringScanner s)
         {
-            var col = this.ReadCollection(db, s);
+            var col = this.ReadCollection(engine, s);
             var index = s.Scan(this.FieldPattern).Trim();
 
-            return col.Max(index.Length == 0 ? "_id" : index);
+            return engine.Max(col, index.Length == 0 ? "_id" : index);
         }
     }
 }

@@ -1,18 +1,14 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
+using System.Collections.Specialized;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace LiteDB
 {
     /// <summary>
-    /// Class that converts POCO class to/from BsonDocument
-    /// If you prefer use a new instance of BsonMapper (not Global), be sure cache this instance for better performance 
+    /// Class that converts your entity class to/from BsonDocument
+    /// If you prefer use a new instance of BsonMapper (not Global), be sure cache this instance for better performance
     /// Serialization rules:
     ///     - Classes must be "public" with a public constructor (without parameters)
     ///     - Properties must have public getter (can be read-only)
@@ -29,18 +25,14 @@ namespace LiteDB
         /// <summary>
         /// Mapping cache between Class/BsonDocument
         /// </summary>
-        private Dictionary<Type, Dictionary<string, PropertyMapper>> _mapper = new Dictionary<Type,Dictionary<string,PropertyMapper>>();
+        private Dictionary<Type, Dictionary<string, PropertyMapper>> _mapper = new Dictionary<Type, Dictionary<string, PropertyMapper>>();
 
         /// <summary>
         /// Map serializer/deserialize for custom types
         /// </summary>
         private Dictionary<Type, Func<object, BsonValue>> _customSerializer = new Dictionary<Type, Func<object, BsonValue>>();
-        private Dictionary<Type, Func<BsonValue, object>> _customDeserializer = new Dictionary<Type, Func<BsonValue, object>>();
 
-        /// <summary>
-        /// Map for autoId type based functions
-        /// </summary>
-        private Dictionary<Type, AutoId> _autoId = new Dictionary<Type, AutoId>();
+        private Dictionary<Type, Func<BsonValue, object>> _customDeserializer = new Dictionary<Type, Func<BsonValue, object>>();
 
         /// <summary>
         /// A resolver name property
@@ -69,6 +61,8 @@ namespace LiteDB
             this.EmptyStringToNull = true;
             this.ResolvePropertyName = (s) => s;
 
+            #region Register CustomTypes
+
             // register custom types
             this.RegisterType<Uri>
             (
@@ -76,34 +70,35 @@ namespace LiteDB
                 deserialize: (bson) => new Uri(bson.AsString)
             );
 
-            // register AutoId for ObjectId, Guid and Int32
-            this.RegisterAutoId<ObjectId>
+            this.RegisterType<NameValueCollection>
             (
-                isEmpty: (v) => v.Equals(ObjectId.Empty),
-                newId: (c) => ObjectId.NewObjectId()
-            );
+                serialize: (nv) =>
+                {
+                    var doc = new BsonDocument();
 
-            this.RegisterAutoId<Guid>
-            (
-                isEmpty: (v) => v == Guid.Empty,
-                newId: (c) => Guid.NewGuid()
-            );
+                    foreach (var key in nv.AllKeys)
+                    {
+                        doc[key] = nv[key];
+                    }
 
-            this.RegisterAutoId<Int32>
-            (
-                isEmpty: (v) => v == 0, 
-                newId: (c) => 
-                { 
-                    var max = c.Max(); 
-                    return max.IsMaxValue ? 1 : (max + 1); 
+                    return doc;
+                },
+                deserialize: (bson) =>
+                {
+                    var nv = new NameValueCollection();
+                    var doc = bson.AsDocument;
+
+                    foreach (var key in doc.Keys)
+                    {
+                        nv[key] = doc[key].AsString;
+                    }
+
+                    return nv;
                 }
             );
-        }
 
-        /// <summary>
-        /// Global BsonMapper instance
-        /// </summary>
-        public static BsonMapper Global = new BsonMapper();
+            #endregion Register CustomTypes
+        }
 
         /// <summary>
         /// Register a custom type serializer/deserialize function
@@ -115,47 +110,11 @@ namespace LiteDB
         }
 
         /// <summary>
-        /// Register a custom Auto Id generator function for a type
+        /// Map your entity class to BsonDocument using fluent API
         /// </summary>
-        public void RegisterAutoId<T>(Func<T, bool> isEmpty, Func<LiteCollection<BsonDocument>, T> newId)
+        public EntityBuilder<T> Entity<T>()
         {
-            _autoId[typeof(T)] = new AutoId
-            {
-                IsEmpty = (o) => isEmpty((T)o),
-                NewId = (c) => (T)newId(c)
-            };
-        }
-
-        /// <summary>
-        /// Set new Id in poco class if this class was decorated with [BsonId(true)]
-        /// </summary>
-        public void SetAutoId(object poco, LiteCollection<BsonDocument> col)
-        {
-            // if object is BsonDocument, there is no AutoId
-            if (poco is BsonDocument) return;
-
-            // get fields mapper
-            var mapper = this.GetPropertyMapper(poco.GetType());
-
-            // it's not best way because is scan all properties - but Id propably is first field :)
-            var id = mapper.Select(x => x.Value).FirstOrDefault(x => x.FieldName == "_id");
-
-            // if not id or no autoId = true
-            if (id == null || id.AutoId == false) return;
-
-            AutoId autoId;
-
-            if (_autoId.TryGetValue(id.PropertyType, out autoId))
-            {
-                var value = id.Getter(poco);
-
-                if (value == null || autoId.IsEmpty(value) == true)
-                {
-                    var newId = autoId.NewId(col);
-
-                    id.Setter(poco, newId);
-                }
-            }
+            return new EntityBuilder<T>(this);
         }
 
         #region Predefinded Property Resolvers
@@ -172,7 +131,7 @@ namespace LiteDB
             this.ResolvePropertyName = (s) => _lowerCaseDelimiter.Replace(s, delimiter + "$2").ToLower();
         }
 
-        #endregion
+        #endregion Predefinded Property Resolvers
 
         /// <summary>
         /// Get property mapper between typed .NET class and BsonDocument - Cache results
@@ -181,20 +140,24 @@ namespace LiteDB
         {
             Dictionary<string, PropertyMapper> props;
 
-            if (_mapper.TryGetValue(type, out props))
+            if (!_mapper.TryGetValue(type, out props))
             {
-                return props;
+                lock (_mapper)
+                {
+                    if (!_mapper.TryGetValue(type, out props))
+                    {
+                        return _mapper[type] = Reflection.GetProperties(type, this.ResolvePropertyName);
+                    }
+                }
             }
 
-            _mapper[type] = Reflection.GetProperties(type, this.ResolvePropertyName);
-
-            return _mapper[type];
+            return props;
         }
 
         /// <summary>
-        /// Search for [BsonIndex] in PropertyMapper. If not found, returns null
+        /// Search for [BsonIndex]/Entity.Index() in PropertyMapper. If not found, returns null
         /// </summary>
-        internal IndexOptions GetIndexFromAttribute<T>(string field)
+        internal IndexOptions GetIndexFromMapper<T>(string field)
         {
             var props = this.GetPropertyMapper(typeof(T));
 

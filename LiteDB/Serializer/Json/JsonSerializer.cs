@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 
 namespace LiteDB
@@ -40,7 +38,7 @@ namespace LiteDB
             w.Serialize(value ?? BsonValue.Null);
         }
 
-        #endregion
+        #endregion Serialize
 
         #region Deserialize
 
@@ -98,7 +96,7 @@ namespace LiteDB
         /// <summary>
         /// Deserialize a json using a StringScanner and returns BsonValue
         /// </summary>
-        public static BsonValue Deserialize(StringScanner s)
+        internal static BsonValue Deserialize(StringScanner s)
         {
             if (s == null) throw new ArgumentNullException("s");
 
@@ -116,6 +114,6 @@ namespace LiteDB
             }
         }
 
-        #endregion
+        #endregion Deserialize
     }
 }

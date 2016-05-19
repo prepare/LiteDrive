@@ -1,38 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-
-namespace LiteDB.Shell.Commands
+﻿namespace LiteDB.Shell.Commands
 {
-    internal class CollectionEnsureIndex : BaseCollection, ILiteCommand
+    internal class CollectionEnsureIndex : BaseCollection, IShellCommand
     {
         public bool IsCommand(StringScanner s)
         {
             return this.IsCollectionCommand(s, "ensure[iI]ndex");
         }
 
-        public BsonValue Execute(LiteDatabase db, StringScanner s)
+        public BsonValue Execute(DbEngine engine, StringScanner s)
         {
-            var col = this.ReadCollection(db, s);
-            var field = s.Scan(this.FieldPattern).Trim();
-            var doc = JsonSerializer.Deserialize(s);
+            var col = this.ReadCollection(engine, s);
+            var field = s.Scan(this.FieldPattern).Trim().ThrowIfEmpty("Invalid field name");
+            var opts = JsonSerializer.Deserialize(s);
+            var options = new IndexOptions();
 
-            if (doc.IsNull)
+            if(opts.IsBoolean)
             {
-                return col.EnsureIndex(field, false);
+                options.Unique = opts.AsBoolean;
             }
-            else if (doc.IsBoolean)
+            else if(opts.IsDocument)
             {
-                return col.EnsureIndex(field, doc.AsBoolean);
-            }
-            else
-            {
-                var options = db.Mapper.ToObject<IndexOptions>(doc.AsDocument);
+                var doc = opts.AsDocument;
 
-                return col.EnsureIndex(field, options);
+                if (doc["unique"].IsBoolean) options.Unique = doc["unique"].AsBoolean;
+                if (doc["ignoreCase"].IsBoolean) options.IgnoreCase = doc["ignoreCase"].AsBoolean;
+                if (doc["removeAccents"].IsBoolean) options.RemoveAccents = doc["removeAccents"].AsBoolean;
+                if (doc["trimWhitespace"].IsBoolean) options.TrimWhitespace = doc["trimWhitespace"].AsBoolean;
+                if (doc["emptyStringToNull"].IsBoolean) options.EmptyStringToNull = doc["emptyStringToNull"].AsBoolean;
             }
+
+            return engine.EnsureIndex(col, field, options);
         }
     }
 }
