@@ -1,12 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace LiteDB
 {
@@ -15,29 +7,22 @@ namespace LiteDB
     /// </summary>
     public class BsonSerializer
     {
-        public static byte[] Serialize(BsonDocument value)
+        public static byte[] Serialize(BsonDocument doc)
         {
-            if (value == null) throw new ArgumentNullException("value");
+            if (doc == null) throw new ArgumentNullException("doc");
 
-            using (var mem = new MemoryStream())
-            {
-                var writer = new BsonWriter();
-                writer.Serialize(mem, value);
+            var writer = new BsonWriter();
 
-                return mem.ToArray();
-            }
+            return writer.Serialize(doc);
         }
 
         public static BsonDocument Deserialize(byte[] bson)
         {
             if (bson == null || bson.Length == 0) throw new ArgumentNullException("bson");
 
-            using (var mem = new MemoryStream(bson))
-            {
-                var reader = new BsonReader();
+            var reader = new BsonReader();
 
-                return reader.Deserialize(mem);
-            }
+            return reader.Deserialize(bson);
         }
     }
 }

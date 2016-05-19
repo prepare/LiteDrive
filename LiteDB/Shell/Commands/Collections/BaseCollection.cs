@@ -1,26 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace LiteDB.Shell.Commands
 {
     internal class BaseCollection
     {
-        public Regex FieldPattern = new Regex(@"\w[\w-]*(\.[\w-]+)*\s*");
+        public Regex FieldPattern = new Regex(@"[\w$\.-]+\s*");
 
         /// <summary>
         /// Read collection name from db.(colname).(command)
         /// </summary>
-        public LiteCollection<BsonDocument> ReadCollection(LiteDatabase db, StringScanner s)
+        public string ReadCollection(DbEngine db, StringScanner s)
         {
-            return db.GetCollection(s.Scan(@"db\.(\w+)\.\w+\s*", 1));
+            return s.Scan(@"db\.([\w-]+)\.\w+\s*", 1);
         }
 
         public bool IsCollectionCommand(StringScanner s, string command)
         {
-            return s.Match(@"db\.\w+\." + command);
+            return s.Match(@"db\.[\w-]+\." + command);
         }
 
         public KeyValuePair<int, int> ReadSkipLimit(StringScanner s)
@@ -60,25 +58,20 @@ namespace LiteDB.Shell.Commands
         private Query ReadInlineQuery(StringScanner s)
         {
             var left = this.ReadOneQuery(s);
-
-            if (s.Match(@"\s+(and|or)\s+") == false)
-            {
-                return left;
-            }
-
             var oper = s.Scan(@"\s+(and|or)\s+").Trim();
 
-            if(oper.Length == 0) throw new ApplicationException("Invalid query operator");
+            // there is no right side
+            if (oper.Length == 0) return left;
 
-            return oper == "and" ?
-                Query.And(left, this.ReadInlineQuery(s)) :
-                Query.Or(left, this.ReadInlineQuery(s));
+            var right = this.ReadInlineQuery(s);
+
+            return oper == "and" ? Query.And(left, right) : Query.Or(left, right);
         }
 
         private Query ReadOneQuery(StringScanner s)
         {
-            var field = s.Scan(this.FieldPattern).Trim();
-            var oper = s.Scan(@"(=|!=|>=|<=|>|<|like|in|between|contains)");
+            var field = s.Scan(this.FieldPattern).Trim().ThrowIfEmpty("Invalid field name");
+            var oper = s.Scan(@"(=|!=|>=|<=|>|<|like|in|between|contains)").ThrowIfEmpty("Invalid query operator");
             var value = JsonSerializer.Deserialize(s);
 
             switch (oper)
@@ -93,7 +86,7 @@ namespace LiteDB.Shell.Commands
                 case "in": return Query.In(field, value.AsArray);
                 case "between": return Query.Between(field, value.AsArray[0], value.AsArray[1]);
                 case "contains": return Query.Contains(field, value);
-                default: throw new ApplicationException("Invalid query operator");
+                default: throw new LiteException("Invalid query operator");
             }
         }
     }

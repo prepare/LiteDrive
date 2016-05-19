@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.IO;
 
 namespace LiteDB.Shell.Commands
 {
@@ -15,8 +9,10 @@ namespace LiteDB.Shell.Commands
             return s.Scan(@"run\s+").Length > 0;
         }
 
-        public override void Execute(LiteShell shell, StringScanner s, Display display, InputCommand input)
+        public override void Execute(ref IShellEngine engine, StringScanner s, Display display, InputCommand input)
         {
+            if (engine == null) throw ShellExpcetion.NoDatabase();
+
             var filename = s.Scan(@".+").Trim();
 
             foreach (var line in File.ReadAllLines(filename))

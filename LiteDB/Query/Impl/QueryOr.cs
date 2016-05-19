@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace LiteDB
 {
@@ -23,18 +21,10 @@ namespace LiteDB
             throw new NotSupportedException();
         }
 
-        internal override bool ExecuteFullScan(BsonDocument doc)
+        internal override IEnumerable<IndexNode> Run(CollectionPage col, IndexService indexer)
         {
-            return _left.ExecuteFullScan(doc) || _right.ExecuteFullScan(doc);
-        }
-
-        internal override IEnumerable<IndexNode> Run<T>(LiteCollection<T> collection)
-        {
-            var left = _left.Run(collection);
-            var right = _right.Run(collection);
-
-            // if any query (left/right) is FullScan, this query is full scan too
-            this.ExecuteMode = _left.ExecuteMode == QueryExecuteMode.FullScan || _right.ExecuteMode == QueryExecuteMode.FullScan ? QueryExecuteMode.FullScan : QueryExecuteMode.IndexSeek;
+            var left = _left.Run(col, indexer);
+            var right = _right.Run(col, indexer);
 
             return left.Union(right, new IndexNodeComparer());
         }

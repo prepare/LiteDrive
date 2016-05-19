@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-
-namespace LiteDB.Shell.Commands
+﻿namespace LiteDB.Shell.Commands
 {
     internal class Version : ConsoleCommand
     {
@@ -13,11 +7,13 @@ namespace LiteDB.Shell.Commands
             return s.Match(@"ver(sion)?$");
         }
 
-        public override void Execute(LiteShell shell, StringScanner s, Display display, InputCommand input)
+        public override void Execute(ref IShellEngine engine, StringScanner s, Display display, InputCommand input)
         {
-            var ver = typeof(LiteDatabase).Assembly.GetName().Version;
+            if(engine == null) throw ShellExpcetion.NoDatabase();
 
-            display.WriteInfo(string.Format("v{0}.{1}.{2}", 
+            var ver = engine.Version;
+
+            display.WriteInfo(string.Format("v{0}.{1}.{2}",
                 ver.Major,
                 ver.Minor,
                 ver.Build));

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace LiteDB
 {
@@ -29,22 +25,17 @@ namespace LiteDB
             // move until next is last
             while (node != null)
             {
-                var diff = node.Value.CompareTo(value);
+                var diff = node.Key.CompareTo(value);
 
                 if (diff == 1 || (_equals && diff == 0))
                 {
-                    if (node.IsHeadTail) yield break;
+                    if (node.IsHeadTail(index)) yield break;
 
                     yield return node;
                 }
 
                 node = indexer.GetNode(node.Next[0]);
             }
-        }
-
-        internal override bool ExecuteFullScan(BsonDocument doc)
-        {
-            return doc.Get(this.Field).CompareTo(_value) >= (_equals ? 0 : 1);
         }
     }
 }

@@ -1,25 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 
 namespace LiteDB
 {
-    internal enum QueryExecuteMode { IndexSeek, FullScan }
-
     /// <summary>
     /// Class helper to create query using indexes in database. All methods are statics.
-    /// Queries can be executed in 3 ways: Index Seek (fast), Index Scan (good), Full Scan (slow)
+    /// Queries can be executed in 2 ways: Index Seek (fast), Index Scan (good)
     /// </summary>
     public abstract class Query
     {
         public string Field { get; private set; }
-
-        /// <summary>
-        /// Indicate that query need to run under full scan (there is not index)
-        /// </summary>
-        internal QueryExecuteMode ExecuteMode { get; set; }
 
         internal Query(string field)
         {
@@ -166,7 +156,7 @@ namespace LiteDB
             return new QueryOr(left, right);
         }
 
-        #endregion
+        #endregion Static Methods
 
         #region Execute Query
 
@@ -176,56 +166,20 @@ namespace LiteDB
         internal abstract IEnumerable<IndexNode> ExecuteIndex(IndexService indexer, CollectionIndex index);
 
         /// <summary>
-        /// Abstract method that must implement full scan - will be called for each document and need
-        /// returns true if condition was satisfied
-        /// </summary>
-        internal abstract bool ExecuteFullScan(BsonDocument doc);
-
-        /// <summary>
         /// Find witch index will be used and run Execute method
         /// </summary>
-        internal virtual IEnumerable<IndexNode> Run<T>(LiteCollection<T> collection)
-            where T : new()
+        internal virtual IEnumerable<IndexNode> Run(CollectionPage col, IndexService indexer)
         {
-            // get collection page - no collection, no results
-            var col = collection.GetCollectionPage(false);
-
-            // no collection just returns an empty list of indexnode
-            if (col == null) return new List<IndexNode>();
-
-            // get index
+            // get index for this query
             var index = col.GetIndex(this.Field);
 
-            // if index not found, lets check if type T has [BsonIndex]
-            if (index == null && typeof(T) != typeof(BsonDocument))
-            {
-                var options = collection.Database.Mapper.GetIndexFromAttribute<T>(this.Field);
+            // no index? throw an index not found exception to auto-create in LiteDatabse
+            if (index == null) throw new IndexNotFoundException(col.CollectionName, this.Field);
 
-                // create a new index
-                if (options != null)
-                {
-                    collection.EnsureIndex(this.Field, options);
-
-                    index = col.GetIndex(this.Field);
-                }
-            }
-
-            if (index == null)
-            {
-                this.ExecuteMode = QueryExecuteMode.FullScan;
-
-                // if there is no index, returns all index nodes - will be used Full Scan
-                return collection.Database.Indexer.FindAll(col.PK, Query.Ascending);
-            }
-            else
-            {
-                this.ExecuteMode = QueryExecuteMode.IndexSeek;
-
-                // execute query to get all IndexNodes
-                return this.ExecuteIndex(collection.Database.Indexer, index);
-            }
+            // execute query to get all IndexNodes
+            return this.ExecuteIndex(indexer, index);
         }
 
-        #endregion
+        #endregion Execute Query
     }
 }

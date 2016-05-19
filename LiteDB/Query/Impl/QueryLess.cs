@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace LiteDB
 {
@@ -24,19 +20,14 @@ namespace LiteDB
 
             foreach (var node in indexer.FindAll(index, Query.Ascending))
             {
-                var diff = node.Value.CompareTo(value);
+                var diff = node.Key.CompareTo(value);
 
                 if (diff == 1 || (!_equals && diff == 0)) break;
 
-                if (node.IsHeadTail) yield break;
+                if (node.IsHeadTail(index)) yield break;
 
                 yield return node;
             }
-        }
-
-        internal override bool ExecuteFullScan(BsonDocument doc)
-        {
-            return doc.Get(this.Field).CompareTo(_value) <= (_equals ? 0 : -1);
         }
     }
 }
