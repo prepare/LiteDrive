@@ -22,7 +22,7 @@ namespace LiteDB
                 foreach (var node in Nodes.Values)
                 {
                     total += node.Length;
-                } 
+                }
                 return PAGE_AVAILABLE_BYTES - total;
             }
         }
@@ -61,7 +61,7 @@ namespace LiteDB
                 node.Key = reader.ReadIndexKey();
                 node.DataBlock = reader.ReadPageAddress();
 
-                
+
                 for (var j = 0; j < node.Prev.Length; j++)
                 {
                     node.Prev[j] = reader.ReadPageAddress();

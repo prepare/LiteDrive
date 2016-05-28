@@ -42,39 +42,6 @@ namespace LiteDB
             }
         }
 
-        //public virtual int Delete(Query query)
-        //{
-        //    var count = 0;
-        //    var col = this.GetCollectionPage();
-
-        //    // find nodes
-        //    var nodes = query.Run(_engine, col);
-
-        //    // start transaction - if clear cache, get again collection page
-        //    if (_engine.Transaction.Begin())
-        //    {
-        //        col = this.GetCollectionPage();
-        //    }
-
-        //    try
-        //    {
-        //        foreach (var node in nodes)
-        //        {
-        //            this.Delete(col, node);
-        //            count++;
-        //        }
-
-        //        _engine.Transaction.Commit();
-
-        //        return count;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _engine.Transaction.Rollback();
-        //        throw ex;
-        //    }
-        //}
-
         void Delete(CollectionPage col, IndexNode node)
         {
             // read dataBlock 

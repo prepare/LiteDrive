@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace LiteDB
 {
-    internal static class BinaryWriterExtensions
+    static class BinaryWriterExtensions
     {
         public static void Write(this BinaryWriter writer, string text, int length)
         {
@@ -55,7 +55,7 @@ namespace LiteDB
             else if (obj.Type == IndexDataType.Int64) writer.Write((Int64)obj.Value);
             else if (obj.Type == IndexDataType.UInt64) writer.Write((UInt64)obj.Value);
 
-            // decimal
+            // floating number
             else if (obj.Type == IndexDataType.Single) writer.Write((Single)obj.Value);
             else if (obj.Type == IndexDataType.Double) writer.Write((Double)obj.Value);
             else if (obj.Type == IndexDataType.Decimal) writer.Write((Decimal)obj.Value);

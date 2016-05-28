@@ -1,12 +1,12 @@
 ﻿//MIT, 2014-2015 Mauricio David
 using System;
-using System.Collections.Generic; 
+using System.Collections.Generic;
 using System.Text;
 using System.IO;
 
 namespace LiteDB
 {
-    internal static class BinaryReaderExtensions
+    static class BinaryReaderExtensions
     {
         public static string ReadString(this BinaryReader reader, int size)
         {

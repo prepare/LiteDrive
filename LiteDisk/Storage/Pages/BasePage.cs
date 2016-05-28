@@ -29,27 +29,27 @@ namespace LiteDB
     {
         public static BasePage CreatePage(byte pageType)
         {
-            
+
             switch ((PageType)pageType)
             {
                 case PageType.Empty:
                     return new EmptyPage();
-                     
+
                 case PageType.Data:
                     return new DataPage();
-                     
+
                 case PageType.Extend:
                     return new ExtendPage();
-                     
+
                 case PageType.Header:
                     return new HeaderPage();
-                     
+
                 case PageType.Index:
                     return new IndexPage();
-                     
+
                 case PageType.Collection:
                     return new CollectionPage();
-                   
+
                 default:
                     throw new NotSupportedException();
             }
@@ -164,9 +164,6 @@ namespace LiteDB
             return page;
         }
 
-        #region Page Header
-
-
 
         internal void SetPageHeaderInfo(ref DiskPageHeaderInfo pageHeaderInfo)
         {
@@ -200,14 +197,11 @@ namespace LiteDB
             pageHeaderInfo.itemCount = reader.ReadUInt16();
             pageHeaderInfo.freeBytes = reader.ReadInt32();
         }
-        #endregion
-
-        #region Page Content
 
         public abstract void ReadContent(BinaryReader reader);
 
         public abstract void WriteContent(BinaryWriter writer);
 
-        #endregion
+
     }
 }

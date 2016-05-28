@@ -336,7 +336,7 @@ namespace LiteDB
                 stream.Write(page.Data, 0, page.Data.Length);
 
                 // read next page or set page to null (last page)
-                page = page.NextPageID == uint.MaxValue ? null :(ExtendPage) _disk.ReadPage(page.NextPageID);
+                page = page.NextPageID == uint.MaxValue ? null : (ExtendPage)_disk.ReadPage(page.NextPageID);
             }
         }
 

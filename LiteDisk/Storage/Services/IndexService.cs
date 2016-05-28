@@ -11,7 +11,7 @@ namespace LiteDB
     /// Implement a Index service - Add/Remove index nodes on SkipList
     /// Based on: http://igoro.com/archive/skip-lists-are-fascinating/
     /// </summary>
-      class IndexService
+    class IndexService
     {
         private PageService _pager;
         private CacheService _cache;

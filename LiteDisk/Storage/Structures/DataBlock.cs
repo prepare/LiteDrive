@@ -7,7 +7,7 @@ using System.Text;
 
 namespace LiteDB
 {
-    internal class DataBlock
+    class DataBlock
     {
         public const int DATA_BLOCK_FIXED_SIZE = 2 + // Position.Index
                                                 (PageAddress.SIZE * CollectionIndex.INDEX_PER_COLLECTION) + // IndexRef pointer
@@ -48,7 +48,7 @@ namespace LiteDB
         /// </summary>
         public int Length
         {
-            get { return  DataBlock.DATA_BLOCK_FIXED_SIZE + this.Key.Length + this.Data.Length; }
+            get { return DataBlock.DATA_BLOCK_FIXED_SIZE + this.Key.Length + this.Data.Length; }
         }
 
         public DataBlock()

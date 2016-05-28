@@ -1,12 +1,12 @@
 ﻿//MIT, 2014-2015 Mauricio David
 using System;
 using System.Collections.Generic;
-using System.IO; 
+using System.IO;
 using System.Text;
 
 namespace LiteDB
 {
-    public partial class Collection  
+    public partial class Collection
     {
         private uint _pageID;
         private LiteEngine _engine;

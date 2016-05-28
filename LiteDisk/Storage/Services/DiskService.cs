@@ -35,9 +35,6 @@ namespace LiteDB
 
             _reader = new BinaryReader(stream);
         }
-
-
-
         /// <summary>
         /// Create a new Page instance and read data from disk
         /// </summary>
