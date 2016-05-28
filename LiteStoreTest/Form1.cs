@@ -186,7 +186,7 @@ namespace LiteStoreTest
             };
             //-----------------------------------------------
             //***manual*** build a serializer
-            var sx1 = MySimpleObjectSx<Customer>.Build(
+            var sx1 = ManualObjSx<Customer>.Build(
                 x => x.Id,
                 p =>
                 {
@@ -253,7 +253,7 @@ namespace LiteStoreTest
                 new {id=0,firstname="X1",lastname="X2"},
                 new {id=1,firstname="X2",lastname="Y2"}
             };
-            var sx1 = MySimpleObjectSx.Build(customerList, //need sample for type inference
+            var sx1 = ManualObjSx.Build(customerList, //need sample for type inference
             x => x.id,
             p =>
             {
@@ -262,7 +262,7 @@ namespace LiteStoreTest
                 p.W("lastname", o => o.lastname);
             });
             //-------------------------------------------------- 
-            var sx2 = MySimpleObjectSx<Customer>.Build(
+            var sx2 = ManualObjSx<Customer>.Build(
                 x => x.Id,
                 p =>
                 {
