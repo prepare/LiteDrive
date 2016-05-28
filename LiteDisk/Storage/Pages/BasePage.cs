@@ -54,8 +54,6 @@ namespace LiteDB
                     throw new NotSupportedException();
             }
         }
-
-
     }
 
     public abstract class BasePage
@@ -147,7 +145,7 @@ namespace LiteDB
             this.FreeBytes = PAGE_AVAILABLE_BYTES;
         }
 
-       
+
 
         internal void SetPageHeaderInfo(ref DiskPageHeaderInfo pageHeaderInfo)
         {

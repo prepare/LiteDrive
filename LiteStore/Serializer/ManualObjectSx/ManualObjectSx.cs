@@ -159,9 +159,7 @@ namespace LiteDB
             }
             //------------------------------------------------
             this.currentObject = obj;
-
             ms.Position = 0;//move to start position
-
             typeRW.Write(obj);
 
             int len = (int)ms.Position;
