@@ -10,13 +10,17 @@ namespace LiteDB
     public delegate void OnReadField<T, V>(T obj, V value);
     public delegate V OnWriteField<T, V>(T obj);
 
+
+
     public static class ManualObjSx<T>
+        where T : new()
     {
-        public static ManualObjectSx<T, K> Build<K>(
+
+        public static ManualObjectSxNewable<T, K> Build<K>(
             GetId<T, K> getIdMethod,
             SerializePlanBuilder<T> serializerMethod)
         {
-            var sx1 = new ManualObjectSx<T, K>();
+            var sx1 = new ManualObjectSxNewable<T, K>();
             sx1.SetSerializeMethod(getIdMethod, serializerMethod);
             return sx1;
         }
@@ -43,6 +47,10 @@ namespace LiteDB
             return sx1;
         }
     }
+
+
+
+
     /// <summary>
     /// manaual object serializer/ deserializer
     /// </summary>
@@ -103,22 +111,12 @@ namespace LiteDB
             serializePlanBuild(typeRW);
 
         }
-        public void Load(int objectId, T obj)
+        public void Load<U>(int objectId, U obj)
+            where U : class,T
         {
-            //T is a single object
-            this.currentObject = obj;
+            //T is a single object 
             this.objectId = getIdMethod(obj);
-            ms.Position = 0;//move to start position
-
-            typeRW.DoWritePlan(obj);
-
-            int len = (int)ms.Position;
-            binWriter.Flush();
-            ms.Position = 0;
-
-            byte[] buffer = new byte[len];
-            ms.Read(buffer, 0, len);
-            this.buffer = buffer;
+            ToBlob(obj);
         }
         public override object GetFieldValue(string fieldName)
         {
@@ -128,20 +126,16 @@ namespace LiteDB
         {
             return this.buffer;
         }
-        public T ConvertFromBlob<U>(byte[] blobData)
+
+        protected T FromBlob<U>(byte[] blobData)
             where U : T, new()
         {
-            ms.Position = 0;
-            ms.Write(blobData, 0, blobData.Length);
-            ms.Position = 0;
-            //-----------------------
             U u = new U();
-            //read data and set
-            typeRW.DoReadPlan(u);
+            FromBlob(u, blobData);
             return u;
             //-----------------------
         }
-        public T ConvertFromBlob(T instance, byte[] blobData)
+        public T FromBlob(T instance, byte[] blobData)
         {
             ms.Position = 0;
             ms.Write(blobData, 0, blobData.Length);
@@ -152,21 +146,41 @@ namespace LiteDB
             return instance;
             //-----------------------
         }
-
-        public T ConvertFromBlob2<U>(IEnumerable<U> sample, byte[] blobData)
-          where U : T, new()
+        public byte[] ToBlob<U>(U obj)
+            where U : class,T
         {
+            if (obj == null)
+            {
+                return new byte[0];
+            }
+            //------------------------------------------------
+            this.currentObject = obj;
+
+            ms.Position = 0;//move to start position
+
+            typeRW.DoWritePlan(obj);
+
+            int len = (int)ms.Position;
+            binWriter.Flush();
             ms.Position = 0;
-            ms.Write(blobData, 0, blobData.Length);
-            ms.Position = 0;
-            //-----------------------
-            U u = new U();
-            //read data and set
-            typeRW.DoReadPlan(u);
-            return u;
-            //-----------------------
+
+            byte[] buffer = new byte[len];
+            ms.Read(buffer, 0, len);
+            return this.buffer = buffer;
         }
     }
+
+    public class ManualObjectSxNewable<T, K> : ManualObjectSx<T, K>
+        where T : new()
+    {
+        public T New(byte[] blobData)
+        {
+            T t = new T();
+            FromBlob(t, blobData);
+            return t;
+        }
+    }
+
 
     /// <summary>
     /// type readwrite plan
@@ -189,12 +203,20 @@ namespace LiteDB
         }
         public abstract void RW(K onkey, OnReadField<T, int> onReadField, OnWriteField<T, int> onWriteField);
         public abstract void RW(K onkey, OnReadField<T, string> onReadField, OnWriteField<T, string> onWriteField);
+        public abstract void RW(K onkey, OnReadField<T, byte[]> onReadField, OnWriteField<T, byte[]> onWriteField);
 
+
+
+        //--------------------------------------------------------------
         public void R(K onkey, OnReadField<T, int> onReadField)
         {
             RW(onkey, onReadField, null);
         }
         public void R(K onkey, OnReadField<T, string> onReadField)
+        {
+            RW(onkey, onReadField, null);
+        }
+        public void R(K onkey, OnReadField<T, byte[]> onReadField)
         {
             RW(onkey, onReadField, null);
         }
@@ -206,7 +228,11 @@ namespace LiteDB
         {
             RW(onkey, null, onWriteField);
         }
-
+        public void W(K onkey, OnWriteField<T, byte[]> onWriteField)
+        {
+            RW(onkey, null, onWriteField);
+        }
+        //--------------------------------------------------------------
 
         public abstract K ReadKey();
         public virtual void DoWritePlan(T obj)
@@ -255,6 +281,15 @@ namespace LiteDB
         }
         public override void RW(string onkey, OnReadField<T, int> onReadField, OnWriteField<T, int> onWriteField)
         {
+            if (onWriteField != null)
+            {
+                writeList.Add(new Action<T>(t =>
+                {
+                    writer.Write(onkey);
+                    writer.Write((byte)BsonType.Int32);
+                    writer.Write(onWriteField(t));
+                }));
+            }
 
             if (onReadField != null)
             {
@@ -266,42 +301,95 @@ namespace LiteDB
                 }));
             }
 
+
+        }
+        public override void RW(string onkey, OnReadField<T, string> onReadField, OnWriteField<T, string> onWriteField)
+        {
             if (onWriteField != null)
             {
                 writeList.Add(new Action<T>(t =>
                 {
                     writer.Write(onkey);
-                    writer.Write((byte)BsonType.Int32);
-                    writer.Write(onWriteField(t));
+                    string str = onWriteField(t);
+                    if (str == null)
+                    {
+                        writer.Write((byte)BsonType.Null);
+                    }
+                    else
+                    {
+                        writer.Write((byte)BsonType.String);
+                        writer.Write(onWriteField(t));
+                    }
+                }));
+
+            }
+            if (onReadField != null)
+            {
+                readActions.Add(onkey, new Action<T>(t =>
+                {
+                    var fieldType = (BsonType)reader.ReadByte();
+                    switch (fieldType)
+                    {
+                        case BsonType.Null:
+                            //not set this field
+                            break;
+                        case BsonType.String:
+                            onReadField(t, reader.ReadString());
+                            break;
+                        default:
+                            throw new NotSupportedException();
+                    }
+
                 }));
             }
 
+
         }
-        public override void RW(string onkey, OnReadField<T, string> onReadField, OnWriteField<T, string> onWriteField)
+        public override void RW(string onkey, OnReadField<T, byte[]> onReadField, OnWriteField<T, byte[]> onWriteField)
         {
+
+            if (onWriteField != null)
+            {
+                writeList.Add(new Action<T>(t =>
+                {
+                    writer.Write(onkey);
+                    byte[] data = onWriteField(t);
+                    if (data == null)
+                    {
+                        writer.Write((byte)BsonType.Null);
+                    }
+                    else
+                    {
+                        writer.Write((byte)BsonType.Binary);
+                        writer.Write(data.Length); //blob len
+                        writer.Write(data); //actual blob data
+                    }
+                }));
+            }
 
             if (onReadField != null)
             {
                 readActions.Add(onkey, new Action<T>(t =>
                 {
                     var fieldType = (BsonType)reader.ReadByte();
-                    if (fieldType != BsonType.String) throw new NotSupportedException();
-                    onReadField(t, reader.ReadString());
+                    switch (fieldType)
+                    {
+                        case BsonType.Null:
+                            //not set this field
+                            break;
+                        case BsonType.Binary:
+                            int blobLen = reader.ReadInt32();
+                            byte[] blobData = reader.ReadBytes(blobLen);
+                            onReadField(t, blobData);
+                            break;
+                        default:
+                            throw new NotSupportedException();
+                    }
+
                 }));
             }
 
-            if (onWriteField != null)
-            {
-                writeList.Add(new Action<T>(t =>
-                {
-                    writer.Write(onkey);
-                    writer.Write((byte)BsonType.String);
-                    writer.Write(onWriteField(t));
-                }));
-
-            }
         }
-
 
     }
 }

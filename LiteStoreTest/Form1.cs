@@ -214,7 +214,7 @@ namespace LiteStoreTest
                 var listCollection = engine.GetCollection("list1");
                 var blob = listCollection.FindById(1);
                 //serialrize back ... to  
-                var data1 = sx1.ConvertFromBlob<Customer>(blob);
+                var data1 = sx1.New(blob);
 
                 //no object id 30 here
                 var listItem2 = listCollection.FindById(30);
@@ -269,7 +269,7 @@ namespace LiteStoreTest
                     p.R("_id", (o, v) => o.Id = v);
                     p.R("firstname", (o, v) => o.FirstName = v);
                     p.R("lastname", (o, v) => o.LastName = v);
-                }); 
+                });
             //--------------------------------------------------
             using (LiteEngine engine = new LiteEngine(dbFilename))
             {
@@ -290,7 +290,7 @@ namespace LiteStoreTest
                 var blob = listCollection.FindById(1);
                 //serialrize back ... to  
 
-                var data1 = sx2.ConvertFromBlob<Customer>(blob);
+                var data1 = sx2.New(blob);
 
                 //no object id 30 here
                 var listItem2 = listCollection.FindById(30);
@@ -315,7 +315,84 @@ namespace LiteStoreTest
             }
         }
 
+        class SuperCustomer
+        {
+            public int Id;
+            public Customer Friend1 { get; set; }
+            public Customer Friend2 { get; set; }
+            public List<Customer> Others { get; set; }
+        }
 
+        private void button4_Click(object sender, EventArgs e)
+        {
+
+
+            //----------------------------------------------- 
+            //complex object
+            var super1 = new SuperCustomer();
+            super1.Friend1 = new Customer() { Id = 0, FirstName = "F1" };
+            super1.Friend2 = new Customer() { Id = 1, FirstName = "F2" };
+            super1.Others = new List<Customer>{
+                new Customer() { Id = 2, FirstName = "F3" },
+                new Customer() { Id = 3, FirstName = "F4" }
+            };
+            //----------------------------------------------- 
+
+            //sample1 
+            string dbFilename = "..\\..\\output\\litedisk4.disk";
+            if (System.IO.File.Exists(dbFilename))
+            {
+                System.IO.File.Delete(dbFilename);
+            }
+
+            //----------------------------------------------- 
+            //create serializer plan
+
+            //***manual*** build a serializer
+            var sx1 = ManualObjSx<Customer>.Build(
+                x => x.Id,
+                p =>
+                {
+                    p.RW("_id", (o, v) => o.Id = v, o => o.Id);
+                    p.RW("firstname", (o, v) => o.FirstName = v, o => o.FirstName);
+                    p.RW("lastname", (o, v) => o.LastName = v, o => o.LastName);
+                });
+            //---------------------------------------------------------------------
+            var sx2 = ManualObjSx<SuperCustomer>.Build(//need sample for type inference
+            x => x.Id,
+            p =>
+            {
+                p.RW("_id", (o, v) => o.Id = v, o => o.Id);
+                p.RW("friend1", (o, v) => o.Friend1 = sx1.New(v), o => sx1.ToBlob(o.Friend1));
+                p.RW("friend2", (o, v) => o.Friend2 = sx1.New(v), o => sx1.ToBlob(o.Friend2));
+            });
+            //---------------------------------------------------------------------
+
+            //write
+            using (LiteEngine engine = new LiteEngine(dbFilename))
+            {
+                var listCollection = engine.GetCollection("list1");
+                engine.BeginTrans();
+                sx2.Load(0, super1);
+                listCollection.Insert(sx2);
+                engine.Commit();
+            }
+
+            //read
+            //read data back from file
+            using (LiteEngine engine = new LiteEngine(dbFilename))
+            {
+                var listCollection = engine.GetCollection("list1");
+                var blob = listCollection.FindById(0);
+                //serialrize back ... to  
+
+                var data1 = sx2.New(blob);
+
+                //no object id 30 here
+                var listItem2 = listCollection.FindById(30);
+            }
+
+        } 
 
     }
 
