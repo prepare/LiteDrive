@@ -51,6 +51,7 @@
     <Compile Include="Serializer\Json\JsonTokenizer.cs" />
     <Compile Include="Serializer\Json\JsonWriter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Serializer\SimpleSerializer\SimpleSerializer.cs" />
     <Compile Include="Utils\BinaryExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
