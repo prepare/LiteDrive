@@ -2,17 +2,17 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-
 using System.Text;
 
 namespace LiteDB
 {
     internal class HeaderPage : BasePage
     {
+
         /// <summary>
         /// Header info the validate that datafile is a LiteDB file
         /// </summary>
-        private const string HEADER_INFO = "** This is a LiteDB file **";
+        static string HEADER_INFO = "** This is a LiteDB file **"; //36 chars
 
         /// <summary>
         /// Datafile specification version
@@ -69,10 +69,10 @@ namespace LiteDB
             var info = reader.ReadString(BasePage.PAGE_HEADER_SIZE);
 
             if (info != HEADER_INFO)
-                throw new LiteException("This file is not a LiteDB datafile");
+                throw new LiteException("This file is not a datafile");
 
             if (reader.ReadByte() != FILE_VERSION)
-                throw new LiteException("Invalid LiteDB datafile version");
+                throw new LiteException("Invalid datafile version");
 
             this.ChangeID = reader.ReadUInt16();
             this.FreeEmptyPageID = reader.ReadUInt32();
@@ -90,6 +90,12 @@ namespace LiteDB
             writer.Write(this.LastPageID);
             writer.Write(this.UserVersion);
             writer.Write(this.MaxFileLength);
+        }
+
+
+        internal static void CustomSetHeaderInfo(string signatureOf36Chars)
+        {
+            HEADER_INFO = signatureOf36Chars;
         }
     }
 }

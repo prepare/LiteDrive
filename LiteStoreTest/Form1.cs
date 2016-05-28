@@ -326,6 +326,8 @@ namespace LiteStoreTest
         private void button4_Click(object sender, EventArgs e)
         {
 
+            //test custom signature
+            LiteEngine.SetCustomPageHeaderSignature(new string('|', 36));
 
             //----------------------------------------------- 
             //complex object
@@ -374,8 +376,10 @@ namespace LiteStoreTest
             {
                 var listCollection = engine.GetCollection("list1");
                 engine.BeginTrans();
+
                 sx2.Load(0, super1);
                 listCollection.Insert(sx2);
+
                 engine.Commit();
             }
 
@@ -386,7 +390,7 @@ namespace LiteStoreTest
                 var listCollection = engine.GetCollection("list1");
                 var blob = listCollection.FindById(0);
                 //serialrize back ... to   
-                var data1 = sx2.New(blob); 
+                var data1 = sx2.New(blob);
                 //no object id 30 here
                 var listItem2 = listCollection.FindById(30);
             }
