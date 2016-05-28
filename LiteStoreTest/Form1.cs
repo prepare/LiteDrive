@@ -29,11 +29,9 @@ namespace LiteStoreTest
             //-----------------------------------------------
             //1. create engine 
             using (LiteEngine engine = new LiteEngine(dbFilename))
-            {
-
+            { 
                 var listCollection = engine.GetCollection("list1");
-                engine.BeginTrans();
-
+                engine.BeginTrans(); 
                 var sx1 = new MySampleListSerializer();
                 for (int i = 0; i < 20; ++i)
                 {
@@ -145,10 +143,7 @@ namespace LiteStoreTest
             }
         }
 
-        private void button2_Click(object sender, EventArgs e)
-        {
-
-        }
+        
 
     }
 

@@ -8,6 +8,17 @@ using System.Threading;
 
 namespace LiteDB
 {
+    struct DiskPageHeaderInfo
+    {
+        public UInt32 pageId;
+        public UInt32 prevPageId;
+        public UInt32 nextPageId;
+        public byte pageType;
+        public UInt16 itemCount;
+        public int freeBytes;
+    }
+
+
     class DiskService : IDisposable
     {
         private ConnectionString _connectionString;
@@ -25,23 +36,30 @@ namespace LiteDB
             _reader = new BinaryReader(stream);
         }
 
+
+
         /// <summary>
         /// Create a new Page instance and read data from disk
         /// </summary>
-        public T ReadPage<T>(uint pageID)
-            where T : BasePage, new()
+        public BasePage ReadPage(uint pageID)
         {
             // Position cursor
             //_reader.Seek(pageID * BasePage.PAGE_SIZE);
             _reader.BaseStream.Seek(pageID * BasePage.PAGE_SIZE, SeekOrigin.Begin);
             // Create page instance and read from disk (read page header + content page)
-            var page = new T();
 
             // target = it's the target position after reader header. It's used when header does not conaints all PAGE_HEADER_SIZE
             var target = _reader.BaseStream.Position + BasePage.PAGE_HEADER_SIZE;
 
-            // read page header
-            page.ReadHeader(_reader);
+
+            DiskPageHeaderInfo diskPageHeaderInfo = new DiskPageHeaderInfo();
+            BasePage.ReadGenericPageHeader(_reader, ref diskPageHeaderInfo);
+            //-------------------------------------------------------------------------------------------
+            //create page by page type and set page header info
+            //-------------------------------------------------------------------------------------------
+            BasePage page = PageFactory.CreatePage(diskPageHeaderInfo.pageType);
+            page.SetPageHeaderInfo(ref diskPageHeaderInfo);
+            //-------------------------------------------------------------------------------------------
 
             // read page content if page is not empty
             if (page.PageType != PageType.Empty)

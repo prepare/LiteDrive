@@ -87,13 +87,19 @@ namespace LiteDB
             reader.Seek(index * BasePage.PAGE_SIZE);
 
             // Create page instance and read from disk (read page header + content page)
-            var page = new BasePage();
+           
 
             // target = it's the target position after reader header. It's used when header does not conaints all PAGE_HEADER_SIZE
             var target = reader.BaseStream.Position + BasePage.PAGE_HEADER_SIZE;
 
-            // read page header
-            page.ReadHeader(reader);
+            DiskPageHeaderInfo diskPageHeaderInfo = new DiskPageHeaderInfo();
+            BasePage.ReadGenericPageHeader(reader, ref diskPageHeaderInfo);
+            //-------------------------------------------------------------------------------------------
+            //create page by page type and set page header info
+            //-------------------------------------------------------------------------------------------
+            BasePage page = PageFactory.CreatePage(diskPageHeaderInfo.pageType);
+            page.SetPageHeaderInfo(ref diskPageHeaderInfo);
+            //-----------------------------------------------------------------------------------------
 
             // Convert BasePage to correct Page Type
             if (page.PageType == PageType.Header) page = page.CopyTo<HeaderPage>();

@@ -295,7 +295,7 @@ namespace LiteDB
             // try get page from Empty free list
             if (_cache.Header.FreeEmptyPageID != uint.MaxValue)
             {
-                var free = _disk.ReadPage<BasePage>(_cache.Header.FreeEmptyPageID);
+                var free = _disk.ReadPage(_cache.Header.FreeEmptyPageID);
 
                 _cache.Header.FreeEmptyPageID = free.NextPageID;
 
@@ -327,7 +327,7 @@ namespace LiteDB
         public void ReadStreamData(uint pageID, Stream stream)
         {
             // read first page direct from disk (no cache)
-            var page = _disk.ReadPage<ExtendPage>(pageID);
+            var page = (ExtendPage)_disk.ReadPage(pageID);
 
             // read all pages and write directly to stream
             while (page != null)
@@ -336,7 +336,7 @@ namespace LiteDB
                 stream.Write(page.Data, 0, page.Data.Length);
 
                 // read next page or set page to null (last page)
-                page = page.NextPageID == uint.MaxValue ? null : _disk.ReadPage<ExtendPage>(page.NextPageID);
+                page = page.NextPageID == uint.MaxValue ? null :(ExtendPage) _disk.ReadPage(page.NextPageID);
             }
         }
 
@@ -346,7 +346,7 @@ namespace LiteDB
         /// <param name="pageID"></param>
         public void DeleteStreamData(uint pageID)
         {
-            var page = _disk.ReadPage<BasePage>(pageID);
+            var page = _disk.ReadPage(pageID);
 
             page.PageType = PageType.Empty;
             page.FreeBytes = BasePage.PAGE_AVAILABLE_BYTES;
@@ -357,7 +357,7 @@ namespace LiteDB
                 _disk.WritePage(page);
 
                 // get next page in sequence
-                page = _disk.ReadPage<BasePage>(page.NextPageID);
+                page = _disk.ReadPage(page.NextPageID);
 
                 // clear
                 page.PageType = PageType.Empty;
