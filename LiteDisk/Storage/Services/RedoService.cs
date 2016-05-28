@@ -12,7 +12,7 @@ namespace LiteDB
     /// <summary>
     /// Service for restore datafile with there a problem when save on disk
     /// </summary>
-      class RedoService
+    class RedoService
     {
         public const long FINISH_POSITION = 4000;
 
@@ -42,7 +42,7 @@ namespace LiteDB
         {
             if (!_enabled) return;
 
-            if(File.Exists(_recovery.RedoFile))
+            if (File.Exists(_recovery.RedoFile))
                 throw new LiteException("Redo file detected. Try reopen data file");
 
             // first, write all dirty pages, in sequence, in a .redo file

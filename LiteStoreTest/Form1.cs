@@ -30,10 +30,8 @@ namespace LiteStoreTest
             //1. create engine 
             using (LiteEngine engine = new LiteEngine(dbFilename))
             {
-
                 var listCollection = engine.GetCollection("list1");
                 engine.BeginTrans();
-
                 var sx1 = new MySampleListSerializer();
                 for (int i = 0; i < 20; ++i)
                 {
@@ -77,7 +75,9 @@ namespace LiteStoreTest
             //-----------------------------------------------------------------
         }
 
-        class MySampleListSerializer : ObjectSerializer
+
+
+        class MySampleListSerializer : ObjectSerializer, IDisposable
         {
 
             MemoryStream ms;
@@ -89,30 +89,44 @@ namespace LiteStoreTest
                 this.ms = new MemoryStream();
                 this.binWriter = new BinaryWriter(ms);
             }
-
-            /// <summary>
-            /// load data to 
-            /// </summary>
-            /// <param name="objectId"></param>
-            /// <param name="list"></param>
+            public void Dispose()
+            {
+                if (binWriter != null)
+                {
+                    binWriter.Close();
+                    binWriter = null;
+                }
+                if (ms != null)
+                {
+                    ms.Close();
+                    ms.Dispose();
+                    ms = null;
+                }
+            }
             public void Load(int objectId, List<int> list)
             {
+
                 this.objectId = objectId;
-                //goto begin
+                //goto begin again
                 this.binWriter.Seek(0, SeekOrigin.Begin);
                 int j = list.Count;
+                int len = 0;
                 for (int i = 0; i < j; ++i)
                 {
                     binWriter.Write(list[i]);
+                    len = (int)binWriter.BaseStream.Position;
                 }
-                buffer = this.ms.ToArray();
-            }
 
+                binWriter.Flush();
+                //make it array
+                buffer = new byte[len];
+                ms.Position = 0;
+                ms.Read(buffer, 0, len);
+            }
             public override byte[] GetBlob()
             {
                 return buffer;
             }
-
             public override object Id
             {
                 get { return this.objectId; }
@@ -145,10 +159,163 @@ namespace LiteStoreTest
             }
         }
 
+
+        class Customer
+        {
+            public int Id { get; set; }
+            public string FirstName { get; set; }
+            public string LastName { get; set; }
+        }
+
         private void button2_Click(object sender, EventArgs e)
         {
+            //sample1 
+            string dbFilename = "..\\..\\output\\litedisk2.disk";
+            if (System.IO.File.Exists(dbFilename))
+            {
+                System.IO.File.Delete(dbFilename);
+            }
+            //-----------------------------------------------
 
+            List<Customer> customerList = new List<Customer>()
+            {
+                new Customer{Id=1,FirstName="A1",LastName="B1"},
+                new Customer{Id=2,FirstName="A2",LastName="B2"},
+                new Customer{Id=3,FirstName="A3",LastName="B3"},
+                new Customer{Id=4,FirstName="A4",LastName="B4"},
+            };
+            //-----------------------------------------------
+            //***manual*** build a serializer
+            var sx1 = MySimpleObjectSx<Customer>.Build(
+                x => x.Id,
+                p =>
+                {
+                    p.RW("_id", (o, v) => o.Id = v, o => o.Id);
+                    p.RW("firstname", (o, v) => o.FirstName = v, o => o.FirstName);
+                    p.RW("lastname", (o, v) => o.LastName = v, o => o.LastName);
+                });
+            //--------------------------------------------------
+
+            using (LiteEngine engine = new LiteEngine(dbFilename))
+            {
+                var listCollection = engine.GetCollection("list1");
+                engine.BeginTrans();
+                for (int i = 0; i < customerList.Count; ++i)
+                {
+                    sx1.Load(i, customerList[i]);
+                    listCollection.Insert(sx1);
+                }
+                engine.Commit();
+            }
+            //-----------------------------------------------------------------
+            //read data back from file
+            using (LiteEngine engine = new LiteEngine(dbFilename))
+            {
+                var listCollection = engine.GetCollection("list1");
+                var blob = listCollection.FindById(1);
+                //serialrize back ... to  
+                var data1 = sx1.ConvertFromBlob<Customer>(blob);
+
+                //no object id 30 here
+                var listItem2 = listCollection.FindById(30);
+            }
+            //-----------------------------------------------------------------
+            //test delete data
+            using (LiteEngine engine = new LiteEngine(dbFilename))
+            {
+                var listCollection = engine.GetCollection("list1");
+                engine.BeginTrans();
+                listCollection.Delete(0);
+                listCollection.Delete(1);
+                engine.Commit();
+
+                //object with id 0 and 1 must not found
+
+                if (listCollection.FindById(0) != null ||
+                    listCollection.FindById(1) != null)
+                {
+                    throw new Exception();
+                }
+            }
         }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            //sample1 
+            string dbFilename = "..\\..\\output\\litedisk3.disk";
+            if (System.IO.File.Exists(dbFilename))
+            {
+                System.IO.File.Delete(dbFilename);
+            }
+
+            //----------------------------------------------- 
+            var customerList = new[]{
+                new {id=0,firstname="X1",lastname="X2"},
+                new {id=1,firstname="X2",lastname="Y2"}
+            };
+            var sx1 = MySimpleObjectSx.Build(customerList, //need sample for type inference
+            x => x.id,
+            p =>
+            {
+                p.W("_id", o => o.id);
+                p.W("firstname", o => o.firstname);
+                p.W("lastname", o => o.lastname);
+            });
+            //-------------------------------------------------- 
+            var sx2 = MySimpleObjectSx<Customer>.Build(
+                x => x.Id,
+                p =>
+                {
+                    p.R("_id", (o, v) => o.Id = v);
+                    p.R("firstname", (o, v) => o.FirstName = v);
+                    p.R("lastname", (o, v) => o.LastName = v);
+                }); 
+            //--------------------------------------------------
+            using (LiteEngine engine = new LiteEngine(dbFilename))
+            {
+                var listCollection = engine.GetCollection("list1");
+                engine.BeginTrans();
+                for (int i = 0; i < customerList.Length; ++i)
+                {
+                    sx1.Load(i, customerList[i]);
+                    listCollection.Insert(sx1);
+                }
+                engine.Commit();
+            }
+            //-----------------------------------------------------------------
+            //read data back from file
+            using (LiteEngine engine = new LiteEngine(dbFilename))
+            {
+                var listCollection = engine.GetCollection("list1");
+                var blob = listCollection.FindById(1);
+                //serialrize back ... to  
+
+                var data1 = sx2.ConvertFromBlob<Customer>(blob);
+
+                //no object id 30 here
+                var listItem2 = listCollection.FindById(30);
+            }
+            //-----------------------------------------------------------------
+            //test delete data
+            using (LiteEngine engine = new LiteEngine(dbFilename))
+            {
+                var listCollection = engine.GetCollection("list1");
+                engine.BeginTrans();
+                listCollection.Delete(0);
+                listCollection.Delete(1);
+                engine.Commit();
+
+                //object with id 0 and 1 must not found
+
+                if (listCollection.FindById(0) != null ||
+                    listCollection.FindById(1) != null)
+                {
+                    throw new Exception();
+                }
+            }
+        }
+
+
 
     }
 

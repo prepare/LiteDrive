@@ -7,7 +7,7 @@ using System.Text;
 
 namespace LiteDB
 {
-    
+
 
     public partial class Collection
     {
@@ -31,7 +31,7 @@ namespace LiteDB
                 var col = this.GetCollectionPage();
 
                 // storage in data pages - returns dataBlock address
-                var dataBlock = _engine.Data.Insert(col, new IndexKey(serializedObject.Id), 
+                var dataBlock = _engine.Data.Insert(col, new IndexKey(serializedObject.Id),
                     serializedObject.GetBlob());
 
                 // store id in a PK index [0 array]
@@ -51,7 +51,7 @@ namespace LiteDB
                     {
                         //var key = BsonSerializer.GetFieldValue(doc, index.Field);
                         var key = serializedObject.GetFieldValue(index.Field);
-                        
+
 
                         var node = _engine.Indexer.AddNode(index, key);
 

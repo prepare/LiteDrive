@@ -36,7 +36,7 @@ namespace LiteDB
             get
             {
                 if (_header == null)
-                    _header = _disk.ReadPage<HeaderPage>(0);
+                    _header = (HeaderPage)_disk.ReadPage(0);
                 return _header;
             }
         }

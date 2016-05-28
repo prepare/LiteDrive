@@ -23,13 +23,14 @@ namespace LiteDB
         /// Get a page from cache or from disk (and put on cache)
         /// </summary>
         public T GetPage<T>(uint pageID)
-            where T : BasePage, new()
+            where T : BasePage
         {
             var page = _cache.GetPage<T>(pageID);
 
             if (page == null)
             {
-                page = _disk.ReadPage<T>(pageID);
+                var basePage = _disk.ReadPage(pageID);
+                page = (T)basePage;
 
                 _cache.AddPage(page);
             }
@@ -41,7 +42,7 @@ namespace LiteDB
         /// Read all sequences pages from a start pageID (using NextPageID) 
         /// </summary>
         public IEnumerable<T> GetSeqPages<T>(uint firstPageID)
-            where T : BasePage, new()
+            where T : BasePage
         {
             var pageID = firstPageID;
 
@@ -210,18 +211,6 @@ namespace LiteDB
             // If not found page, create a new one
             return this.NewPage<T>();
         }
-        ////------------------------
-        //public bool Contains()
-        //{
-        //    return false;
-        //}
-        //public int CountTotalPage()
-        //{
-        //    foreach(var p this.GetPage(1))
-        //    {
-        //    }
-        //}
-
-
+       
     }
 }

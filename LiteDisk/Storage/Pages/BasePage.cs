@@ -9,7 +9,56 @@ namespace LiteDB
 {
     public enum PageType { Empty = 0, Header = 1, Collection = 2, Index = 3, Data = 4, Extend = 5 }
 
-    public class BasePage
+    class EmptyPage : BasePage
+    {
+        public override void ReadContent(BinaryReader reader)
+        {
+        }
+        public override void WriteContent(BinaryWriter writer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void WriteHeader(BinaryWriter writer)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    static class PageFactory
+    {
+        public static BasePage CreatePage(byte pageType)
+        {
+
+            switch ((PageType)pageType)
+            {
+                case PageType.Empty:
+                    return new EmptyPage();
+
+                case PageType.Data:
+                    return new DataPage();
+
+                case PageType.Extend:
+                    return new ExtendPage();
+
+                case PageType.Header:
+                    return new HeaderPage();
+
+                case PageType.Index:
+                    return new IndexPage();
+
+                case PageType.Collection:
+                    return new CollectionPage();
+
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
+
+    }
+
+    public abstract class BasePage
     {
         #region Page Constants
 
@@ -98,33 +147,17 @@ namespace LiteDB
             this.FreeBytes = PAGE_AVAILABLE_BYTES;
         }
 
-        /// <summary>
-        /// Create a new espefic page, copy all header content
-        /// </summary>
-        public T CopyTo<T>()
-            where T : BasePage, new()
+       
+
+        internal void SetPageHeaderInfo(ref DiskPageHeaderInfo pageHeaderInfo)
         {
-            var page = new T();
-            page.PageID = this.PageID;
-            page.PrevPageID = this.PrevPageID;
-            page.NextPageID = this.NextPageID;
-            page.PageType = this.PageType;
-            page.ItemCount = this.ItemCount;
-            page.IsDirty = this.IsDirty;
+            this.PageID = pageHeaderInfo.pageId;
+            this.PrevPageID = pageHeaderInfo.prevPageId;
+            this.NextPageID = pageHeaderInfo.nextPageId;
+            this.PageType = (PageType)pageHeaderInfo.pageType;
 
-            return page;
-        }
-
-        #region Page Header
-
-        public virtual void ReadHeader(BinaryReader reader)
-        {
-            this.PageID = reader.ReadUInt32();
-            this.PrevPageID = reader.ReadUInt32();
-            this.NextPageID = reader.ReadUInt32();
-            this.PageType = (PageType)reader.ReadByte();
-            this.ItemCount = reader.ReadUInt16();
-            this.FreeBytes = reader.ReadInt32();
+            this.ItemCount = pageHeaderInfo.itemCount;
+            this.FreeBytes = pageHeaderInfo.freeBytes;
         }
 
         public virtual void WriteHeader(BinaryWriter writer)
@@ -138,18 +171,21 @@ namespace LiteDB
             writer.Write(this.FreeBytes);
         }
 
-        #endregion
-
-        #region Page Content
-
-        public virtual void ReadContent(BinaryReader reader)
+        internal static void ReadCommonPageHeader(BinaryReader reader, ref DiskPageHeaderInfo pageHeaderInfo)
         {
+            pageHeaderInfo.pageId = reader.ReadUInt32();
+            pageHeaderInfo.prevPageId = reader.ReadUInt32();
+            pageHeaderInfo.nextPageId = reader.ReadUInt32();
+            pageHeaderInfo.pageType = reader.ReadByte();
+
+            pageHeaderInfo.itemCount = reader.ReadUInt16();
+            pageHeaderInfo.freeBytes = reader.ReadInt32();
         }
 
-        public virtual void WriteContent(BinaryWriter writer)
-        {
-        }
+        public abstract void ReadContent(BinaryReader reader);
 
-        #endregion
+        public abstract void WriteContent(BinaryWriter writer);
+
+
     }
 }

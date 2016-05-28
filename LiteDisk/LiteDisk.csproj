@@ -35,7 +35,6 @@
     <Compile Include="Engine\Collection\Collection.cs" />
     <Compile Include="Engine\Collection\Collection.Delete.cs" />
     <Compile Include="Engine\Collection\Collection.Find.cs" />
-    <Compile Include="Engine\Collection\Collection.Index.cs" />
     <Compile Include="Engine\Collection\Collection.Insert.cs" />
     <Compile Include="Engine\Collection\Collection.Update.cs" />
     <Compile Include="Engine\LiteEngine.cs" />

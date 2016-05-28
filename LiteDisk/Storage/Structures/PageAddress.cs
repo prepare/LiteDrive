@@ -9,7 +9,7 @@ namespace LiteDB
     /// <summary>
     /// Represents a page adress inside a page structure - index could be byte offset position OR index in a list
     /// </summary>
-    internal struct PageAddress
+    struct PageAddress
     {
         public const int SIZE = 6;
 
@@ -20,7 +20,7 @@ namespace LiteDB
         public ushort Index;
 
         public bool IsEmpty
-        { 
+        {
             get { return PageID == uint.MaxValue; }
         }
 
