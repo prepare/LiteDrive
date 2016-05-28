@@ -5,16 +5,38 @@ using System.IO;
 
 namespace LiteDB
 {
-    public delegate void SerializePlanBuilder<T>(TypeReadWritePlan<T> writer);
+    public delegate void SerializePlanBuilder<T>(TypeStringKeyRW<T> writer);
     public delegate K GetId<T, K>(T obj);
-    public delegate void OnSetField<T, V>(T obj, V value);
-    public delegate V GetValue<T, V>(T obj);
+    public delegate void OnReadField<T, V>(T obj, V value);
+    public delegate V OnWriteField<T, V>(T obj);
 
     public static class MySimpleObjectSx<T>
     {
         public static MySimpleObjectSerializer<T, K> Build<K>(
             GetId<T, K> getIdMethod,
             SerializePlanBuilder<T> serializerMethod)
+        {
+            var sx1 = new MySimpleObjectSerializer<T, K>();
+            sx1.SetSerializeMethod(getIdMethod, serializerMethod);
+            return sx1;
+        }
+    }
+
+    public static class MySimpleObjectSx
+    {
+        public static MySimpleObjectSerializer<T, K> Build<T, K>(
+            IEnumerable<T> sample,
+            GetId<T, K> getIdMethod,
+            SerializePlanBuilder<T> serializerMethod)
+        {
+            var sx1 = new MySimpleObjectSerializer<T, K>();
+            sx1.SetSerializeMethod(getIdMethod, serializerMethod);
+            return sx1;
+        }
+        public static MySimpleObjectSerializer<T, K> Build<T, K>(
+         T sample,
+         GetId<T, K> getIdMethod,
+         SerializePlanBuilder<T> serializerMethod)
         {
             var sx1 = new MySimpleObjectSerializer<T, K>();
             sx1.SetSerializeMethod(getIdMethod, serializerMethod);
@@ -30,7 +52,7 @@ namespace LiteDB
         byte[] buffer;
         K objectId;
         T currentObject;
-        TypeReadWritePlan<T> typeRW;
+        TypeStringKeyRW<T> typeRW;
         SerializePlanBuilder<T> serializePlanBuild;
         GetId<T, K> getIdMethod;
 
@@ -40,7 +62,7 @@ namespace LiteDB
             this.ms = new MemoryStream();
             this.binWriter = new BinaryWriter(ms);
             this.binReader = new BinaryReader(ms);
-            this.typeRW = new TypeReadWritePlan<T>(binReader, binWriter);
+            this.typeRW = new TypeStringKeyRW<T>(binReader, binWriter);
         }
         public void Dispose()
         {
@@ -114,10 +136,35 @@ namespace LiteDB
             return u;
             //-----------------------
         }
+        public T ConvertFromBlob(T instance, byte[] blobData)
+        {
+            ms.Position = 0;
+            ms.Write(blobData, 0, blobData.Length);
+            ms.Position = 0;
+            //-----------------------             
+            //read data and set
+            typeRW.DoReadPlan(instance);
+            return instance;
+            //-----------------------
+        }
+
+        public T ConvertFromBlob2<U>(IEnumerable<U> sample, byte[] blobData)
+          where U : T, new()
+        {
+            ms.Position = 0;
+            ms.Write(blobData, 0, blobData.Length);
+            ms.Position = 0;
+            //-----------------------
+            U u = new U();
+            //read data and set
+            typeRW.DoReadPlan(u);
+            return u;
+            //-----------------------
+        }
     }
 
 
-    public abstract class TypeReadWritePlanBase<K, T>
+    public abstract class TypePlanReadWrite<K, T>
     {
         //K= key type
         //T= data
@@ -126,13 +173,32 @@ namespace LiteDB
         protected readonly List<Action<T>> writeList = new List<Action<T>>();
         protected readonly Dictionary<K, Action<T>> readActions = new Dictionary<K, Action<T>>();
 
-        public TypeReadWritePlanBase(BinaryReader reader, BinaryWriter writer)
+        public TypePlanReadWrite(BinaryReader reader, BinaryWriter writer)
         {
             this.reader = reader;
             this.writer = writer;
         }
-        public abstract void Set(K onkey, GetValue<T, int> getField, OnSetField<T, int> setField);
-        public abstract void Set(K onkey, GetValue<T, string> getField, OnSetField<T, string> setField);
+        public abstract void RW(K onkey, OnReadField<T, int> onReadField, OnWriteField<T, int> onWriteField);
+        public abstract void RW(K onkey, OnReadField<T, string> onReadField, OnWriteField<T, string> onWriteField);
+
+        public void R(K onkey, OnReadField<T, int> onReadField)
+        {
+            RW(onkey, onReadField, null);
+        }
+        public void R(K onkey, OnReadField<T, string> onReadField)
+        {
+            RW(onkey, onReadField, null);
+        }
+        public void W(K onkey, OnWriteField<T, int> onWriteField)
+        {
+            RW(onkey, null, onWriteField);
+        }
+        public void W(K onkey, OnWriteField<T, string> onWriteField)
+        {
+            RW(onkey, null, onWriteField);
+        }
+
+
         public abstract K ReadKey();
         public virtual void DoWritePlan(T obj)
         {
@@ -146,7 +212,7 @@ namespace LiteDB
         public virtual void DoReadPlan(T obj)
         {
             //num of field
-            int j = reader.ReadUInt16(); 
+            int j = reader.ReadUInt16();
             //read key
             for (int i = 0; i < j; ++i)
             {
@@ -166,10 +232,10 @@ namespace LiteDB
 
     }
 
-    public class TypeReadWritePlan<T> : TypeReadWritePlanBase<string, T>
+    public class TypeStringKeyRW<T> : TypePlanReadWrite<string, T>
     {
 
-        internal TypeReadWritePlan(BinaryReader reader, BinaryWriter writer)
+        internal TypeStringKeyRW(BinaryReader reader, BinaryWriter writer)
             : base(reader, writer)
         {
         }
@@ -177,37 +243,53 @@ namespace LiteDB
         {
             return reader.ReadString();
         }
-        public override void Set(string onkey, GetValue<T, int> getField, OnSetField<T, int> setField)
+        public override void RW(string onkey, OnReadField<T, int> onReadField, OnWriteField<T, int> onWriteField)
         {
-            writeList.Add(new Action<T>(t =>
-            {
-                writer.Write(onkey);
-                writer.Write((byte)BsonType.Int32);
-                writer.Write(getField(t));
-            }));
 
-            readActions.Add(onkey, new Action<T>(t =>
+            if (onReadField != null)
             {
-                var fieldType = (BsonType)reader.ReadByte();
-                if (fieldType != BsonType.Int32) throw new NotSupportedException();
-                setField(t, reader.ReadInt32());
-            }));
+                readActions.Add(onkey, new Action<T>(t =>
+                {
+                    var fieldType = (BsonType)reader.ReadByte();
+                    if (fieldType != BsonType.Int32) throw new NotSupportedException();
+                    onReadField(t, reader.ReadInt32());
+                }));
+            }
+
+            if (onWriteField != null)
+            {
+                writeList.Add(new Action<T>(t =>
+                {
+                    writer.Write(onkey);
+                    writer.Write((byte)BsonType.Int32);
+                    writer.Write(onWriteField(t));
+                }));
+            }
+
         }
-        public override void Set(string onkey, GetValue<T, string> getField, OnSetField<T, string> setField)
+        public override void RW(string onkey, OnReadField<T, string> onReadField, OnWriteField<T, string> onWriteField)
         {
-            writeList.Add(new Action<T>(t =>
-            {
-                writer.Write(onkey);
-                writer.Write((byte)BsonType.String);
-                writer.Write(getField(t));
-            }));
 
-            readActions.Add(onkey, new Action<T>(t =>
+            if (onReadField != null)
             {
-                var fieldType = (BsonType)reader.ReadByte();
-                if (fieldType != BsonType.String) throw new NotSupportedException();
-                setField(t, reader.ReadString());
-            }));
+                readActions.Add(onkey, new Action<T>(t =>
+                {
+                    var fieldType = (BsonType)reader.ReadByte();
+                    if (fieldType != BsonType.String) throw new NotSupportedException();
+                    onReadField(t, reader.ReadString());
+                }));
+            }
+
+            if (onWriteField != null)
+            {
+                writeList.Add(new Action<T>(t =>
+                {
+                    writer.Write(onkey);
+                    writer.Write((byte)BsonType.String);
+                    writer.Write(onWriteField(t));
+                }));
+
+            }
         }
 
 

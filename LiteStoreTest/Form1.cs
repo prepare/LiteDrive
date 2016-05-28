@@ -176,7 +176,6 @@ namespace LiteStoreTest
                 System.IO.File.Delete(dbFilename);
             }
             //-----------------------------------------------
-            //1. create engine 
 
             List<Customer> customerList = new List<Customer>()
             {
@@ -184,19 +183,18 @@ namespace LiteStoreTest
                 new Customer{Id=2,FirstName="A2",LastName="B2"},
                 new Customer{Id=3,FirstName="A3",LastName="B3"},
                 new Customer{Id=4,FirstName="A4",LastName="B4"},
-            }; 
+            };
             //-----------------------------------------------
             //***manual*** build a serializer
             var sx1 = MySimpleObjectSx<Customer>.Build(
                 x => x.Id,
-                w =>
+                p =>
                 {
-                    w.Set("_id", o => o.Id, (o, v) => o.Id = v);
-                    w.Set("firstname", o => o.FirstName, (o, v) => o.FirstName = v);
-                    w.Set("lastname", o => o.LastName, (o, v) => o.LastName = v);
-                }); 
-            //-----------------------------------------------
-
+                    p.RW("_id", (o, v) => o.Id = v, o => o.Id);
+                    p.RW("firstname", (o, v) => o.FirstName = v, o => o.FirstName);
+                    p.RW("lastname", (o, v) => o.LastName = v, o => o.LastName);
+                });
+            //--------------------------------------------------
 
             using (LiteEngine engine = new LiteEngine(dbFilename))
             {
@@ -216,7 +214,83 @@ namespace LiteStoreTest
                 var listCollection = engine.GetCollection("list1");
                 var blob = listCollection.FindById(1);
                 //serialrize back ... to  
-                var list = sx1.ConvertFromBlob<Customer>(blob);
+                var data1 = sx1.ConvertFromBlob<Customer>(blob);
+
+                //no object id 30 here
+                var listItem2 = listCollection.FindById(30);
+            }
+            //-----------------------------------------------------------------
+            //test delete data
+            using (LiteEngine engine = new LiteEngine(dbFilename))
+            {
+                var listCollection = engine.GetCollection("list1");
+                engine.BeginTrans();
+                listCollection.Delete(0);
+                listCollection.Delete(1);
+                engine.Commit();
+
+                //object with id 0 and 1 must not found
+
+                if (listCollection.FindById(0) != null ||
+                    listCollection.FindById(1) != null)
+                {
+                    throw new Exception();
+                }
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            //sample1 
+            string dbFilename = "..\\..\\output\\litedisk3.disk";
+            if (System.IO.File.Exists(dbFilename))
+            {
+                System.IO.File.Delete(dbFilename);
+            }
+
+            //----------------------------------------------- 
+            var customerList = new[]{
+                new {id=0,firstname="X1",lastname="X2"},
+                new {id=1,firstname="X2",lastname="Y2"}
+            };
+            var sx1 = MySimpleObjectSx.Build(customerList, //need sample for type inference
+            x => x.id,
+            p =>
+            {
+                p.W("_id", o => o.id);
+                p.W("firstname", o => o.firstname);
+                p.W("lastname", o => o.lastname);
+            });
+            //-------------------------------------------------- 
+            var sx2 = MySimpleObjectSx<Customer>.Build(
+                x => x.Id,
+                p =>
+                {
+                    p.R("_id", (o, v) => o.Id = v);
+                    p.R("firstname", (o, v) => o.FirstName = v);
+                    p.R("lastname", (o, v) => o.LastName = v);
+                }); 
+            //--------------------------------------------------
+            using (LiteEngine engine = new LiteEngine(dbFilename))
+            {
+                var listCollection = engine.GetCollection("list1");
+                engine.BeginTrans();
+                for (int i = 0; i < customerList.Length; ++i)
+                {
+                    sx1.Load(i, customerList[i]);
+                    listCollection.Insert(sx1);
+                }
+                engine.Commit();
+            }
+            //-----------------------------------------------------------------
+            //read data back from file
+            using (LiteEngine engine = new LiteEngine(dbFilename))
+            {
+                var listCollection = engine.GetCollection("list1");
+                var blob = listCollection.FindById(1);
+                //serialrize back ... to  
+
+                var data1 = sx2.ConvertFromBlob<Customer>(blob);
 
                 //no object id 30 here
                 var listItem2 = listCollection.FindById(30);
