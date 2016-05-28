@@ -10,13 +10,17 @@ namespace LiteDB
     public delegate void OnReadField<T, V>(T obj, V value);
     public delegate V OnWriteField<T, V>(T obj);
 
+
+
     public static class ManualObjSx<T>
+        where T : new()
     {
-        public static ManualObjectSx<T, K> Build<K>(
+
+        public static ManualObjectSxNewable<T, K> Build<K>(
             GetId<T, K> getIdMethod,
             SerializePlanBuilder<T> serializerMethod)
         {
-            var sx1 = new ManualObjectSx<T, K>();
+            var sx1 = new ManualObjectSxNewable<T, K>();
             sx1.SetSerializeMethod(getIdMethod, serializerMethod);
             return sx1;
         }
@@ -123,7 +127,7 @@ namespace LiteDB
             return this.buffer;
         }
 
-        public virtual T FromBlob<U>(byte[] blobData)
+        protected T FromBlob<U>(byte[] blobData)
             where U : T, new()
         {
             U u = new U();
@@ -131,7 +135,7 @@ namespace LiteDB
             return u;
             //-----------------------
         }
-        public virtual T FromBlob(T instance, byte[] blobData)
+        public T FromBlob(T instance, byte[] blobData)
         {
             ms.Position = 0;
             ms.Write(blobData, 0, blobData.Length);
@@ -166,14 +170,24 @@ namespace LiteDB
         }
     }
 
+    public class ManualObjectSxNewable<T, K> : ManualObjectSx<T, K>
+        where T : new()
+    {
+        public T New(byte[] blobData)
+        {
+            T t = new T();
+            FromBlob(t, blobData);
+            return t;
+        }
+    }
 
-     
+
     /// <summary>
     /// type readwrite plan
     /// </summary>
     /// <typeparam name="K"></typeparam>
     /// <typeparam name="T"></typeparam>
-    public abstract class TypeReadWritePlan<K, T> 
+    public abstract class TypeReadWritePlan<K, T>
     {
         //K= key type
         //T= data
