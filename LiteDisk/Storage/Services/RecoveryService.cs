@@ -93,21 +93,14 @@ namespace LiteDB
             var target = reader.BaseStream.Position + BasePage.PAGE_HEADER_SIZE;
 
             DiskPageHeaderInfo diskPageHeaderInfo = new DiskPageHeaderInfo();
-            BasePage.ReadGenericPageHeader(reader, ref diskPageHeaderInfo);
+            BasePage.ReadCommonPageHeader(reader, ref diskPageHeaderInfo);
             //-------------------------------------------------------------------------------------------
             //create page by page type and set page header info
             //-------------------------------------------------------------------------------------------
             BasePage page = PageFactory.CreatePage(diskPageHeaderInfo.pageType);
             page.SetPageHeaderInfo(ref diskPageHeaderInfo);
             //-----------------------------------------------------------------------------------------
-
-            // Convert BasePage to correct Page Type
-            if (page.PageType == PageType.Header) page = page.CopyTo<HeaderPage>();
-            else if (page.PageType == PageType.Collection) page = page.CopyTo<CollectionPage>();
-            else if (page.PageType == PageType.Index) page = page.CopyTo<IndexPage>();
-            else if (page.PageType == PageType.Data) page = page.CopyTo<DataPage>();
-            else if (page.PageType == PageType.Extend) page = page.CopyTo<ExtendPage>();
-
+  
             // read page content if page is not empty
             if (page.PageType != PageType.Empty)
             {

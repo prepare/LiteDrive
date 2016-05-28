@@ -50,7 +50,7 @@ namespace LiteDB
 
 
             DiskPageHeaderInfo diskPageHeaderInfo = new DiskPageHeaderInfo();
-            BasePage.ReadGenericPageHeader(_reader, ref diskPageHeaderInfo);
+            BasePage.ReadCommonPageHeader(_reader, ref diskPageHeaderInfo);
             //-------------------------------------------------------------------------------------------
             //create page by page type and set page header info
             //-------------------------------------------------------------------------------------------

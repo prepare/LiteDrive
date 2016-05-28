@@ -211,18 +211,6 @@ namespace LiteDB
             // If not found page, create a new one
             return this.NewPage<T>();
         }
-        ////------------------------
-        //public bool Contains()
-        //{
-        //    return false;
-        //}
-        //public int CountTotalPage()
-        //{
-        //    foreach(var p this.GetPage(1))
-        //    {
-        //    }
-        //}
-
-
+       
     }
 }

@@ -147,23 +147,7 @@ namespace LiteDB
             this.FreeBytes = PAGE_AVAILABLE_BYTES;
         }
 
-        /// <summary>
-        /// Create a new espefic page, copy all header content
-        /// </summary>
-        public T CopyTo<T>()
-            where T : BasePage, new()
-        {
-            var page = new T();
-            page.PageID = this.PageID;
-            page.PrevPageID = this.PrevPageID;
-            page.NextPageID = this.NextPageID;
-            page.PageType = this.PageType;
-            page.ItemCount = this.ItemCount;
-            page.IsDirty = this.IsDirty;
-
-            return page;
-        }
-
+       
 
         internal void SetPageHeaderInfo(ref DiskPageHeaderInfo pageHeaderInfo)
         {
@@ -187,7 +171,7 @@ namespace LiteDB
             writer.Write(this.FreeBytes);
         }
 
-        internal static void ReadGenericPageHeader(BinaryReader reader, ref DiskPageHeaderInfo pageHeaderInfo)
+        internal static void ReadCommonPageHeader(BinaryReader reader, ref DiskPageHeaderInfo pageHeaderInfo)
         {
             pageHeaderInfo.pageId = reader.ReadUInt32();
             pageHeaderInfo.prevPageId = reader.ReadUInt32();
