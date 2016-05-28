@@ -43,6 +43,10 @@ namespace LiteDB
             return sx1;
         }
     }
+
+
+
+
     /// <summary>
     /// manaual object serializer/ deserializer
     /// </summary>
@@ -118,16 +122,16 @@ namespace LiteDB
         {
             return this.buffer;
         }
-        public T FromBlob<U>(byte[] blobData)
+
+        public virtual T FromBlob<U>(byte[] blobData)
             where U : T, new()
         {
-
             U u = new U();
-            ConvertFromBlob(u, blobData);
+            FromBlob(u, blobData);
             return u;
             //-----------------------
         }
-        public T ConvertFromBlob(T instance, byte[] blobData)
+        public virtual T FromBlob(T instance, byte[] blobData)
         {
             ms.Position = 0;
             ms.Write(blobData, 0, blobData.Length);
@@ -163,15 +167,13 @@ namespace LiteDB
     }
 
 
-    public abstract class TypeReadWritePlanBase<U>
-    {
-    }
+     
     /// <summary>
     /// type readwrite plan
     /// </summary>
     /// <typeparam name="K"></typeparam>
     /// <typeparam name="T"></typeparam>
-    public abstract class TypeReadWritePlan<K, T> : TypeReadWritePlanBase<T>
+    public abstract class TypeReadWritePlan<K, T> 
     {
         //K= key type
         //T= data
@@ -344,7 +346,7 @@ namespace LiteDB
                     }
                     else
                     {
-                        writer.Write((byte)BsonType.Binary);                         
+                        writer.Write((byte)BsonType.Binary);
                         writer.Write(data.Length); //blob len
                         writer.Write(data); //actual blob data
                     }
