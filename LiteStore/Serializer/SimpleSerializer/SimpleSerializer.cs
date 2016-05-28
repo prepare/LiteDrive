@@ -5,45 +5,50 @@ using System.IO;
 
 namespace LiteDB
 {
-    public delegate void SerializePlanBuilder<T>(TypeStringKeyRW<T> writer);
+    public delegate void SerializePlanBuilder<T>(TypeStringKeyRWPlan<T> writer);
     public delegate K GetId<T, K>(T obj);
     public delegate void OnReadField<T, V>(T obj, V value);
     public delegate V OnWriteField<T, V>(T obj);
 
-    public static class MySimpleObjectSx<T>
+    public static class ManualObjSx<T>
     {
-        public static MySimpleObjectSerializer<T, K> Build<K>(
+        public static ManualObjectSx<T, K> Build<K>(
             GetId<T, K> getIdMethod,
             SerializePlanBuilder<T> serializerMethod)
         {
-            var sx1 = new MySimpleObjectSerializer<T, K>();
+            var sx1 = new ManualObjectSx<T, K>();
             sx1.SetSerializeMethod(getIdMethod, serializerMethod);
             return sx1;
         }
     }
 
-    public static class MySimpleObjectSx
+    public static class ManualObjSx
     {
-        public static MySimpleObjectSerializer<T, K> Build<T, K>(
+        public static ManualObjectSx<T, K> Build<T, K>(
             IEnumerable<T> sample,
             GetId<T, K> getIdMethod,
             SerializePlanBuilder<T> serializerMethod)
         {
-            var sx1 = new MySimpleObjectSerializer<T, K>();
+            var sx1 = new ManualObjectSx<T, K>();
             sx1.SetSerializeMethod(getIdMethod, serializerMethod);
             return sx1;
         }
-        public static MySimpleObjectSerializer<T, K> Build<T, K>(
+        public static ManualObjectSx<T, K> Build<T, K>(
          T sample,
          GetId<T, K> getIdMethod,
          SerializePlanBuilder<T> serializerMethod)
         {
-            var sx1 = new MySimpleObjectSerializer<T, K>();
+            var sx1 = new ManualObjectSx<T, K>();
             sx1.SetSerializeMethod(getIdMethod, serializerMethod);
             return sx1;
         }
     }
-    public class MySimpleObjectSerializer<T, K> : ObjectSerializer, IDisposable
+    /// <summary>
+    /// manaual object serializer/ deserializer
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="K"></typeparam>
+    public class ManualObjectSx<T, K> : ObjectSerializer, IDisposable
     {
         MemoryStream ms;
         BinaryWriter binWriter;
@@ -52,17 +57,17 @@ namespace LiteDB
         byte[] buffer;
         K objectId;
         T currentObject;
-        TypeStringKeyRW<T> typeRW;
+        TypeStringKeyRWPlan<T> typeRW;
         SerializePlanBuilder<T> serializePlanBuild;
         GetId<T, K> getIdMethod;
 
 
-        public MySimpleObjectSerializer()
+        public ManualObjectSx()
         {
             this.ms = new MemoryStream();
             this.binWriter = new BinaryWriter(ms);
             this.binReader = new BinaryReader(ms);
-            this.typeRW = new TypeStringKeyRW<T>(binReader, binWriter);
+            this.typeRW = new TypeStringKeyRWPlan<T>(binReader, binWriter);
         }
         public void Dispose()
         {
@@ -163,8 +168,12 @@ namespace LiteDB
         }
     }
 
-
-    public abstract class TypePlanReadWrite<K, T>
+    /// <summary>
+    /// type readwrite plan
+    /// </summary>
+    /// <typeparam name="K"></typeparam>
+    /// <typeparam name="T"></typeparam>
+    public abstract class TypeReadWritePlan<K, T>
     {
         //K= key type
         //T= data
@@ -173,7 +182,7 @@ namespace LiteDB
         protected readonly List<Action<T>> writeList = new List<Action<T>>();
         protected readonly Dictionary<K, Action<T>> readActions = new Dictionary<K, Action<T>>();
 
-        public TypePlanReadWrite(BinaryReader reader, BinaryWriter writer)
+        public TypeReadWritePlan(BinaryReader reader, BinaryWriter writer)
         {
             this.reader = reader;
             this.writer = writer;
@@ -232,10 +241,11 @@ namespace LiteDB
 
     }
 
-    public class TypeStringKeyRW<T> : TypePlanReadWrite<string, T>
+
+    public class TypeStringKeyRWPlan<T> : TypeReadWritePlan<string, T>
     {
 
-        internal TypeStringKeyRW(BinaryReader reader, BinaryWriter writer)
+        internal TypeStringKeyRWPlan(BinaryReader reader, BinaryWriter writer)
             : base(reader, writer)
         {
         }
