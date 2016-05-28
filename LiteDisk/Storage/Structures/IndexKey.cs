@@ -38,8 +38,6 @@ namespace LiteDB
         public readonly object Value;
         public readonly int Length;
 
-
-
         public IndexKey(object value)
         {
             this.Value = value;
@@ -131,8 +129,6 @@ namespace LiteDB
                 default:
                     throw new NotImplementedException();
             }
-
-
 
         }
 

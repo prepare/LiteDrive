@@ -12,7 +12,7 @@ namespace LiteDB
     /// <summary>
     /// Service for restore datafile with there a problem when save on disk
     /// </summary>
-      class RecoveryService
+    class RecoveryService
     {
         const int ERROR_SHARING_VIOLATION = 32;
         const int ERROR_LOCK_VIOLATION = 33;
@@ -87,7 +87,7 @@ namespace LiteDB
             reader.Seek(index * BasePage.PAGE_SIZE);
 
             // Create page instance and read from disk (read page header + content page)
-           
+
 
             // target = it's the target position after reader header. It's used when header does not conaints all PAGE_HEADER_SIZE
             var target = reader.BaseStream.Position + BasePage.PAGE_HEADER_SIZE;

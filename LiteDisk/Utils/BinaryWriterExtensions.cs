@@ -46,33 +46,44 @@ namespace LiteDB
         {
             writer.Write((byte)obj.Type);
 
-            // int
-            if (obj.Type == IndexDataType.Byte) writer.Write((Byte)obj.Value);
-            else if (obj.Type == IndexDataType.Int16) writer.Write((Int16)obj.Value);
-            else if (obj.Type == IndexDataType.UInt16) writer.Write((UInt16)obj.Value);
-            else if (obj.Type == IndexDataType.Int32) writer.Write((Int32)obj.Value);
-            else if (obj.Type == IndexDataType.UInt32) writer.Write((UInt32)obj.Value);
-            else if (obj.Type == IndexDataType.Int64) writer.Write((Int64)obj.Value);
-            else if (obj.Type == IndexDataType.UInt64) writer.Write((UInt64)obj.Value);
-
-            // floating number
-            else if (obj.Type == IndexDataType.Single) writer.Write((Single)obj.Value);
-            else if (obj.Type == IndexDataType.Double) writer.Write((Double)obj.Value);
-            else if (obj.Type == IndexDataType.Decimal) writer.Write((Decimal)obj.Value);
-
-            // string
-            else if (obj.Type == IndexDataType.String)
+            switch (obj.Type)
             {
-                var length = (byte)Encoding.UTF8.GetByteCount((String)obj.Value);
-                writer.Write(length);
-                writer.Write((String)obj.Value, length);
+                // int
+                case IndexDataType.Byte: writer.Write((Byte)obj.Value); break;
+                case IndexDataType.Int16: writer.Write((Int16)obj.Value); break;
+                case IndexDataType.UInt16: writer.Write((UInt16)obj.Value); break;
+                case IndexDataType.Int32: writer.Write((int)obj.Value); break;
+                case IndexDataType.UInt32: writer.Write((UInt32)obj.Value); break;
+                case IndexDataType.Int64: writer.Write((Int64)obj.Value); break;
+                case IndexDataType.UInt64: writer.Write((UInt64)obj.Value); break;
+                //floating number
+                case IndexDataType.Single: writer.Write((Single)obj.Value); break;
+                case IndexDataType.Double: writer.Write((Double)obj.Value); break;
+                case IndexDataType.Decimal: writer.Write((Decimal)obj.Value); break;
+                //string
+                case IndexDataType.String:
+                    {
+                        //TODO: review here
+                        int length = Encoding.UTF8.GetByteCount((String)obj.Value);
+                        if (length > byte.MaxValue)
+                        {
+                            throw new NotSupportedException("string index not more than " + byte.MaxValue);
+                        }
+                        writer.Write((byte)length);
+                        writer.Write((String)obj.Value, length);
+                    } break;
+                case IndexDataType.DateTime:
+                    writer.Write((DateTime)obj.Value);
+                    break;
+                case IndexDataType.Guid:
+                    writer.Write((Guid)obj.Value);
+                    break;
+                case IndexDataType.Null:
+                    break;
+                default:
+                    throw new NotSupportedException("unknown type");
             }
 
-            // other
-            else if (obj.Type == IndexDataType.DateTime) writer.Write((DateTime)obj.Value);
-            else if (obj.Type == IndexDataType.Guid) writer.Write((Guid)obj.Value);
-
-            // otherwise is null
         }
 
         public static long Seek(this BinaryWriter writer, long position)
