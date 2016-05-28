@@ -365,6 +365,7 @@ namespace LiteStoreTest
                 p.RW("_id", (o, v) => o.Id = v, o => o.Id);
                 p.RW("friend1", (o, v) => o.Friend1 = sx1.New(v), o => sx1.ToBlob(o.Friend1));
                 p.RW("friend2", (o, v) => o.Friend2 = sx1.New(v), o => sx1.ToBlob(o.Friend2));
+                p.RW("others", (o, v) => o.Others = sx1.NewList(v), o => sx1.ToBlob(o.Others));
             });
             //---------------------------------------------------------------------
 
@@ -384,15 +385,13 @@ namespace LiteStoreTest
             {
                 var listCollection = engine.GetCollection("list1");
                 var blob = listCollection.FindById(0);
-                //serialrize back ... to  
-
-                var data1 = sx2.New(blob);
-
+                //serialrize back ... to   
+                var data1 = sx2.New(blob); 
                 //no object id 30 here
                 var listItem2 = listCollection.FindById(30);
             }
 
-        } 
+        }
 
     }
 

@@ -58,9 +58,9 @@ namespace LiteDB
     /// <typeparam name="K"></typeparam>
     public class ManualObjectSx<T, K> : ObjectSerializer, IDisposable
     {
-        MemoryStream ms;
-        BinaryWriter binWriter;
-        BinaryReader binReader;
+        protected MemoryStream ms;
+        protected BinaryWriter binWriter;
+        protected BinaryReader binReader;
 
         byte[] buffer;
         K objectId;
@@ -127,25 +127,29 @@ namespace LiteDB
             return this.buffer;
         }
 
-        protected T FromBlob<U>(byte[] blobData)
-            where U : T, new()
-        {
-            U u = new U();
-            FromBlob(u, blobData);
-            return u;
-            //-----------------------
-        }
-        public T FromBlob(T instance, byte[] blobData)
+
+        protected void LoadBlob(byte[] blobData)
         {
             ms.Position = 0;
             ms.Write(blobData, 0, blobData.Length);
             ms.Position = 0;
-            //-----------------------             
-            //read data and set
-            typeRW.DoReadPlan(instance);
-            return instance;
+            //-----------------------       
+        }
+        protected T FromBlob<U>(byte[] blobData)
+            where U : T, new()
+        {
+            LoadBlob(blobData);
+            U u = new U();
+            FromBlob(u);
+            return u;
             //-----------------------
         }
+        protected void FromBlob(T instance)
+        { 
+            //read data and set
+            typeRW.Read(instance); 
+        }
+
         public byte[] ToBlob<U>(U obj)
             where U : class,T
         {
@@ -158,8 +162,33 @@ namespace LiteDB
 
             ms.Position = 0;//move to start position
 
-            typeRW.DoWritePlan(obj);
+            typeRW.Write(obj);
 
+            int len = (int)ms.Position;
+            binWriter.Flush();
+            ms.Position = 0;
+
+            byte[] buffer = new byte[len];
+            ms.Read(buffer, 0, len);
+            return this.buffer = buffer;
+        }
+        public byte[] ToBlob<U>(List<U> list)
+           where U : class,T
+        {
+            if (list == null)
+            {
+                return new byte[0];
+            }
+            //------------------------------------------------
+            ms.Position = 0;//move to start position
+
+            int j = list.Count;
+            binWriter.Write(j); //item count
+            for (int i = 0; i < j; ++i)
+            {
+                typeRW.Write(list[i]);
+            }
+            //------------------------------------------------ 
             int len = (int)ms.Position;
             binWriter.Flush();
             ms.Position = 0;
@@ -175,9 +204,25 @@ namespace LiteDB
     {
         public T New(byte[] blobData)
         {
+            LoadBlob(blobData);
             T t = new T();
-            FromBlob(t, blobData);
+            FromBlob(t);
             return t;
+        }
+        public List<T> NewList(byte[] blobData)
+        {
+            LoadBlob(blobData);
+
+            List<T> list = new List<T>();
+            int count = binReader.ReadInt32();//list count
+
+            for (int i = 0; i < count; ++i)
+            {
+                T t = new T();
+                FromBlob(t);
+                list.Add(t);
+            }
+            return list;
         }
     }
 
@@ -235,7 +280,7 @@ namespace LiteDB
         //--------------------------------------------------------------
 
         public abstract K ReadKey();
-        public virtual void DoWritePlan(T obj)
+        public void Write(T obj)
         {
             int j = writeList.Count;
             writer.Write((ushort)j); //num of field to write
@@ -244,7 +289,7 @@ namespace LiteDB
                 writeList[i](obj);
             }
         }
-        public virtual void DoReadPlan(T obj)
+        public void Read(T obj)
         {
             //num of field
             int j = reader.ReadUInt16();
