@@ -11,6 +11,5 @@ namespace LiteDB
         public abstract object Id { get; }
         public abstract byte[] GetBlob();
         public abstract object GetFieldValue(string fieldName);
-
     }
 }

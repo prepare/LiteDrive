@@ -74,15 +74,6 @@ namespace LiteDB
             return new Collection(this, name);
         }
 
-        ///// <summary>
-        ///// Get a collection using a generic BsonDocument. If collection does not exits, create a new one.
-        ///// </summary>
-        ///// <param name="name">Collection name (case insensitive)</param>
-        //public Collection<BsonDocument> GetCollection(string name)
-        //{
-        //    return new Collection<BsonDocument>(this, name);
-        //}
-
         /// <summary>
         /// Drop a collection, including all inside documents. Runs outside a transaction - there is no rollback
         /// </summary>
@@ -92,13 +83,7 @@ namespace LiteDB
             return this.Collections.Drop(name);
         }
 
-        ///// <summary>
-        ///// Get all collections name inside this database.
-        ///// </summary>
-        //public string[] GetCollections()
-        //{
-        //    return this.Collections.GetAll().Select(x => x.CollectionName).ToArray();
-        //}
+
 
         #endregion
 
@@ -172,15 +157,6 @@ namespace LiteDB
 
         #region Files Storage
 
-        //private FileStorage _files = null;
-
-        /// <summary>
-        /// Returns a special collection for storage files/stream inside datafile
-        /// </summary>
-        //public FileStorage FileStorage
-        //{
-        //    get { return _files ?? (_files = new FileStorage(this)); }
-        //}
 
         #endregion
 
@@ -237,5 +213,20 @@ namespace LiteDB
         {
             Disk.Dispose();
         }
+
+
+        public static void SetCustomPageHeaderSignature(string signatureOf36Chars)
+        {
+            if (signatureOf36Chars.Length == 36)
+            {
+                HeaderPage.CustomSetHeaderInfo(signatureOf36Chars);
+            }
+            else
+            {
+                throw new Exception("custom signature length must= 36");
+            }
+
+        }
+
     }
 }

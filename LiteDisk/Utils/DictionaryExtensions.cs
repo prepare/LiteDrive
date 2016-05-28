@@ -27,9 +27,5 @@ namespace LiteDB
             return dict.ContainsKey(name) ? dict[name] : null;
         }
 
-        //public static BsonValue Get(this Dictionary<string, BsonValue> dict, string name)
-        //{
-        //    return dict.ContainsKey(name) ? dict[name] : new BsonValue();
-        //}
     }
 }

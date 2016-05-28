@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -35,7 +36,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Serializer\Bson\BsonReader.cs" />
+    <Compile Include="Serializer\Bson\BsonSerializer.cs" />
+    <Compile Include="Serializer\Bson\BsonWriter.cs" />
+    <Compile Include="ByteReader.cs" />
+    <Compile Include="ByteWriter.cs" />
+    <Compile Include="Document\BsonArray.cs" />
+    <Compile Include="Document\BsonDocument.cs" />
+    <Compile Include="Document\BsonType.cs" />
+    <Compile Include="Document\BsonValue.cs" />
+    <Compile Include="Document\ObjectId.cs" />
+    <Compile Include="Serializer\Json\JsonReader.cs" />
+    <Compile Include="Serializer\Json\JsonSerializer.cs" />
+    <Compile Include="Serializer\Json\JsonTokenizer.cs" />
+    <Compile Include="Serializer\Json\JsonWriter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Serializer\ManualObjectSx\ManualObjectSx.cs" />
+    <Compile Include="Utils\BinaryExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LiteBson\LiteBson.csproj">

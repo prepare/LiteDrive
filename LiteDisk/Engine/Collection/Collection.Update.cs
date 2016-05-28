@@ -48,7 +48,7 @@ namespace LiteDB
 
                     if (!index.IsEmpty)
                     {
-                        
+
                         var key = serializedObject.GetFieldValue(index.Field);
 
                         var node = _engine.Indexer.GetNode(dataBlock.IndexRef[i]);

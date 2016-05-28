@@ -12,7 +12,7 @@ namespace LiteDB
     /// <summary>
     /// Service for restore datafile with there a problem when save on disk
     /// </summary>
-      class RecoveryService
+    class RecoveryService
     {
         const int ERROR_SHARING_VIOLATION = 32;
         const int ERROR_LOCK_VIOLATION = 33;
@@ -87,21 +87,20 @@ namespace LiteDB
             reader.Seek(index * BasePage.PAGE_SIZE);
 
             // Create page instance and read from disk (read page header + content page)
-            var page = new BasePage();
+
 
             // target = it's the target position after reader header. It's used when header does not conaints all PAGE_HEADER_SIZE
             var target = reader.BaseStream.Position + BasePage.PAGE_HEADER_SIZE;
 
-            // read page header
-            page.ReadHeader(reader);
-
-            // Convert BasePage to correct Page Type
-            if (page.PageType == PageType.Header) page = page.CopyTo<HeaderPage>();
-            else if (page.PageType == PageType.Collection) page = page.CopyTo<CollectionPage>();
-            else if (page.PageType == PageType.Index) page = page.CopyTo<IndexPage>();
-            else if (page.PageType == PageType.Data) page = page.CopyTo<DataPage>();
-            else if (page.PageType == PageType.Extend) page = page.CopyTo<ExtendPage>();
-
+            DiskPageHeaderInfo diskPageHeaderInfo = new DiskPageHeaderInfo();
+            BasePage.ReadCommonPageHeader(reader, ref diskPageHeaderInfo);
+            //-------------------------------------------------------------------------------------------
+            //create page by page type and set page header info
+            //-------------------------------------------------------------------------------------------
+            BasePage page = PageFactory.CreatePage(diskPageHeaderInfo.pageType);
+            page.SetPageHeaderInfo(ref diskPageHeaderInfo);
+            //-----------------------------------------------------------------------------------------
+  
             // read page content if page is not empty
             if (page.PageType != PageType.Empty)
             {

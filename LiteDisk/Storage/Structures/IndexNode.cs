@@ -9,7 +9,7 @@ namespace LiteDB
     /// <summary>
     /// Represent a index node inside a Index Page
     /// </summary>
-    internal class IndexNode : IEqualityComparer<IndexNode>
+    class IndexNode : IEqualityComparer<IndexNode>
     {
         public const int INDEX_NODE_FIXED_SIZE = 2 + // Position.Index (ushort)
                                                  PageAddress.SIZE; // DataBlock
@@ -54,9 +54,9 @@ namespace LiteDB
         /// </summary>
         public int Length
         {
-            get 
-            { 
-                return IndexNode.INDEX_NODE_FIXED_SIZE + 
+            get
+            {
+                return IndexNode.INDEX_NODE_FIXED_SIZE +
                     (this.Prev.Length * PageAddress.SIZE * 2) + // Prev + Next
                     Key.Length; // Key
             }

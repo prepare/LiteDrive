@@ -10,7 +10,7 @@ namespace LiteDB
     /// <summary>
     /// Manage all transaction and garantee concurrency and recovery
     /// </summary>
-      class TransactionService
+    class TransactionService
     {
         private DiskService _disk;
         private CacheService _cache;
@@ -38,7 +38,7 @@ namespace LiteDB
             if (_level == 0)
             {
                 // Get header page from DISK to check changeID
-                var header = _disk.ReadPage<HeaderPage>(0);
+                var header = (HeaderPage)_disk.ReadPage(0);
 
                 // If versionID was changed, clear cache
                 if (header.ChangeID != _cache.Header.ChangeID)
@@ -103,7 +103,7 @@ namespace LiteDB
             if (_level == 0) return;
 
             // Clear all pages from memory
-            _cache.Clear(); 
+            _cache.Clear();
 
             // Unlock datafile
             _disk.UnLock();

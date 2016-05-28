@@ -1,7 +1,7 @@
 ﻿//MIT, 2014-2015 Mauricio David
 using System;
 using System.Collections.Generic;
-using System.IO; 
+using System.IO;
 using System.Text;
 
 namespace LiteDB
@@ -13,7 +13,7 @@ namespace LiteDB
     {
         public int ErrorCode { get; private set; }
 
-        internal LiteException(string message)
+        public LiteException(string message)
             : base(message)
         {
         }

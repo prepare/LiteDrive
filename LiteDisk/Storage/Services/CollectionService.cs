@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace LiteDB
 {
-      class CollectionService
+    class CollectionService
     {
         private PageService _pager;
         private IndexService _indexer;
